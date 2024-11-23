@@ -65,10 +65,10 @@ function getAllBotsRequests({knownPaths, knownPatterns, knownApiPaths, knownApiP
         .join("\n");
 }
 
-function logTraffic(app){
+function logTraffic(app, {knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}){
     // Traffic logging middleware
     app.use((req, res, next) => {
-        fs.writeFileSync(`${__dirname}/bots.txt`, getAllBotsRequests());
+        fs.writeFileSync(`${__dirname}/bots.txt`, getAllBotsRequests({knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}));
         if(
             !req.originalUrl.match(/\.(js|css|ico|png|jpg|jpeg|gif|svg|webp)$/) &&
             req.originalUrl != "/support" &&
@@ -878,10 +878,15 @@ const responses = {
             "status": "WP Admin Setup Config active",
             "description": "This endpoint serves WP admin setup configuration."
         },
-        "/wp-admin/admin-ajax.php": {
-            "status": "WP Admin AJAX active",
-            "description": "This endpoint handles AJAX requests in WP admin."
-        }
+        "/wp-admin/admin-ajax": {
+            "status": "WordPress AJAX Handler active",
+            "description": "This endpoint handles WordPress AJAX requests."
+        },
+        "/wordpress/wp-content": {
+            "status": "WordPress Content Directory active",
+            "description": "This endpoint serves WordPress content files and media."
+        },
+        "/wp-admin": `\n<html>\n<head>\n<title>WP Admin Page</title>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n</head>\n<body>\n<h1>WP Admin Page</h1>\n<p>This page serves the WP admin interface.</p>\n<footer>\n<p>Powered by WordPress</p>\n</footer>\n</body>\n</html>`
     },
     "security": {
         "/+CSCOE+/logon.html": {
@@ -927,10 +932,26 @@ const responses = {
         "/cgi/conf.bin": {
             "status": "CGI Config active",
             "description": "This endpoint serves CGI configuration."
+        },
+        "/server-info": {
+            "status": "Server Information active",
+            "description": "This endpoint provides server status and configuration details."
+        },
+        "/hazelcast/rest/cluster": {
+            "status": "Hazelcast Cluster API active",
+            "description": "This endpoint provides Hazelcast cluster information."
+        },
+        "/nice%20ports%2C/Tri%6Eity.txt%2ebak": {
+            "status": "System File active",
+            "description": "This endpoint serves system backup files."
         }
     },
     "vendor": {
         "/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php": {
+            "status": "PHPUnit Eval Stdin active",
+            "description": "This endpoint handles PHPUnit eval-stdin functionality."
+        },
+        "/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin": {
             "status": "PHPUnit Eval Stdin active",
             "description": "This endpoint handles PHPUnit eval-stdin functionality."
         }
@@ -1177,6 +1198,22 @@ const responses = {
         "/api/index/webconfig": {
             "status": "Unknown Endpoint active",
             "description": "This endpoint serves an unknown request."
+        },
+        "/api/im/v2/app/config": {
+            "status": "Unknown Endpoint active",
+            "description": "This endpoint serves an unknown request."
+        },
+        "/api/config": {
+            "status": "Unknown Endpoint active",
+            "description": "This endpoint serves an unknown request."
+        },
+        "/api/apps/config": {
+            "status": "Unknown Endpoint active",
+            "description": "This endpoint serves an unknown request."
+        },
+        "/api/config/getkefu": {
+            "status": "Unknown Endpoint active",
+            "description": "This endpoint serves an unknown request."
         }
     },
     "status": {
@@ -1325,7 +1362,7 @@ notCoveredAdditionalEndpoints.forEach(endpoint => {
 
 function getUnhandledRoutes(routes, {knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}) {
     let unhandledRoutes = [];
-    const botsRequests = getAllBotsRequests(); // its a txt log file
+    const botsRequests = getAllBotsRequests({knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}); // its a txt log file
     botsRequests.split('\n').forEach(botRequest => {
         const path = botRequest.split(" - ")[2]
             .replace(/^(GET|POST|DELETE|PUT|PATCH|HEAD) /, "")
