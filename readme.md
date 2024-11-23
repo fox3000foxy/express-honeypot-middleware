@@ -22,7 +22,7 @@ Basic usage:
 const express = require('express');
 const app = express();
 // Initialize the honeypot middleware
-require('./honeypotMiddleware')(app);
+require('express-middleware-honeypot')(app);
 app.listen(3000, () => {
      console.log('Server running on port 3000');
 });
@@ -34,7 +34,7 @@ With 404 handler enabled (spoof PHP 404):
 const express = require('express');
 const app = express();
 // Initialize with 404 handler
-require('./honeypotMiddleware')(app, true);
+require('express-middleware-honeypot')(app, true);
 app.listen(3000, () => {
      console.log('Server running on port 3000');
 });
