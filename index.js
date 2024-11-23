@@ -13,6 +13,9 @@ const port = 5080; // Change this to the port of the server
 // Log Format: Date - Ip - Browser - Method - Path - Status - User
 // Exemple: 2024-11-20T14:19:37.295Z - 91.247.75.125 - Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 - GET /sss - 200 - 1
 
+if(!fs.existsSync(`${__dirname}/traffic.txt`)) fs.writeFileSync(`${__dirname}/traffic.txt`, "");
+if(!fs.existsSync(`${__dirname}/bots.txt`)) fs.writeFileSync(`${__dirname}/bots.txt`, "");
+
 function isKnownPath(path) {
     if (!path) return { isKnown: false, type: 'unknown' };
     path = path.replace(/GET|POST|DELETE|PUT|PATCH/g, "")
