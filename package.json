@@ -8,8 +8,5 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "sha256": "^0.2.0"
-  }
+  "license": "ISC"
 }

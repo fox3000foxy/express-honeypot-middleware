@@ -22,14 +22,17 @@ function isKnownPath(path, {knownPaths, knownPatterns, knownApiPaths, knownApiPa
         .trim();
     // Normalize path by removing query params and trailing slashes
     const normalizedPath = path.split('?')[0];
+    const withoutTrailingSlash = normalizedPath.replace(/\/$/, "");
 
-    return {
-        isKnown: knownPaths.includes(normalizedPath) ||
-                 knownPatterns.some(pattern => pattern.test(normalizedPath)) ||
-                 knownApiPaths.includes(normalizedPath) ||
-                 knownApiPatterns.some(pattern => pattern.test(normalizedPath)),
+    const isKnown = {
+        isKnown: knownPaths.includes(withoutTrailingSlash) ||
+                 knownPatterns.some(pattern => pattern.test(withoutTrailingSlash)) ||
+                 knownApiPaths.includes(withoutTrailingSlash) ||
+                 knownApiPatterns.some(pattern => pattern.test(withoutTrailingSlash)),
         type: normalizedPath.startsWith('/api/') ? 'api' : 'page'
     };
+    // console.log(normalizedPath, isKnown, knownPaths.includes(withoutTrailingSlash))
+    return isKnown;
 }
 
 function getLogForIp(ip) {
@@ -1369,6 +1372,7 @@ function getUnhandledRoutes(routes, {knownPaths, knownPatterns, knownApiPaths, k
             .trim();
         
         const isKnown = isKnownPath(path,{knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}).isKnown;
+        console.log(path, isKnown)
         const isAdditionalEndpoint = additionalEndpoints.includes(path);
         let isResponseKey = false;
         Object.keys(responses).forEach(key => {
@@ -1410,10 +1414,13 @@ module.exports = (app, {
     }) => {
     if(logTraffic) logTraffic(app);
 
+    //console.log(knownPaths)
+
     Object.keys(responses).forEach(async key => {
         Object.keys(responses[key]).forEach(async path => {
             const response = responses[key][path];
-            if(isKnownPath(path,{knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}).isKnown) {
+            const isKnown = isKnownPath(path,{knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}).isKnown
+            if(isKnown) {
                 return;
             }
             app.all(path,async  (req, res) => {
