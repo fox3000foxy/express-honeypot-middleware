@@ -16,58 +16,12 @@ const port = 5080; // Change this to the port of the server
 if(!fs.existsSync(`${__dirname}/traffic.txt`)) fs.writeFileSync(`${__dirname}/traffic.txt`, "");
 if(!fs.existsSync(`${__dirname}/bots.txt`)) fs.writeFileSync(`${__dirname}/bots.txt`, "");
 
-function isKnownPath(path) {
+function isKnownPath(path, {knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}) {
     if (!path) return { isKnown: false, type: 'unknown' };
     path = path.replace(/GET|POST|DELETE|PUT|PATCH/g, "")
         .trim();
     // Normalize path by removing query params and trailing slashes
     const normalizedPath = path.split('?')[0];
-    
-    // Define known static paths
-    const knownPaths = [
-        '/',
-        '/blogs',
-        '/write-blog',
-        '/logout',
-        '/login',
-        '/settings',
-        '/register',
-        '/contact',
-        '/cart',
-        '/support',
-        '/robots.txt',
-        '/favicon.ico',
-        '/products',
-        '/about',
-        '/ai',
-        '/productsDetails',
-        '/bots.txt',
-        '/robots.txt',
-        '/sitemap.xml',
-
-        // My exclusive paths
-        '/top',
-        '/newTop',
-    ];
-
-    // Define known dynamic paths patterns
-    const knownPatterns = [
-        /^\/blogs\/[^\/]+$/, // Matches /blogs/{blogId}
-        /^\/assets\/.*$/, // Matches /assets/*
-        /^\/blogs\/assets\/.*$/, // Matches /blogs/assets/*
-    ];
-
-    // Define known API paths
-    const knownApiPaths = [
-        '/api/cart',
-        '/api/cart/list'
-    ];
-
-    // Define known API patterns
-    const knownApiPatterns = [
-        /^\/api\/cart\/[^\/]+$/, // Matches /api/cart/{productId}
-        /^\/api\/cart\/update\/[^\/]+$/ // Matches /api/cart/update/{productId}
-    ];
 
     return {
         isKnown: knownPaths.includes(normalizedPath) ||
@@ -86,16 +40,16 @@ function getLogForIp(ip) {
         .join("\n");
 }
 
-function getLogForIpUnknownPathOnly(ip) {
+function getLogForIpUnknownPathOnly(ip, {knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}) {
     const logs = getLogForIp(ip);
-    return logs.filter(log => !isKnownPath(log.split(" - ")[3]).isKnown);
+    return logs.filter(log => !isKnownPath(log.split(" - ")[3],{knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}).isKnown);
 }
 
 //Check all requests of unknown path
-function getAllBotsRequests(hashIp=false) {
+function getAllBotsRequests({knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}, hashIp=false) {
     return fs.readFileSync(`${__dirname}/traffic.txt`, 'utf-8')
         .split("\n")
-        .filter(log => log.includes("guest") && !isKnownPath(log.split(" - ")[3]).isKnown) // Filter out known paths
+        .filter(log => log.includes("guest") && !isKnownPath(log.split(" - ")[3],{knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}).isKnown) // Filter out known paths
         .map(log => {
             let parts = log.split(" - ");
             const ip = parts[1];
@@ -1163,10 +1117,6 @@ const responses = {
         "/doc/index.html": {
             "status": "Documentation Index active",
             "description": "This endpoint serves the documentation index."
-        },
-        "/traffic.txt": {
-            "status": "Traffic Log active",
-            "description": "This endpoint serves the traffic log."
         }
     },
     "refresher": {
@@ -1373,7 +1323,7 @@ notCoveredAdditionalEndpoints.forEach(endpoint => {
     };
 });
 
-function getUnhandledRoutes(routes) {
+function getUnhandledRoutes(routes, {knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}) {
     let unhandledRoutes = [];
     const botsRequests = getAllBotsRequests(); // its a txt log file
     botsRequests.split('\n').forEach(botRequest => {
@@ -1381,7 +1331,7 @@ function getUnhandledRoutes(routes) {
             .replace(/^(GET|POST|DELETE|PUT|PATCH|HEAD) /, "")
             .trim();
         
-        const isKnown = isKnownPath(path).isKnown;
+        const isKnown = isKnownPath(path,{knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}).isKnown;
         const isAdditionalEndpoint = additionalEndpoints.includes(path);
         let isResponseKey = false;
         Object.keys(responses).forEach(key => {
@@ -1413,13 +1363,20 @@ Object.keys(responses).forEach(category => {
     });
 });
 
-module.exports = (app, is404Handler = false) => {
-    logTraffic(app);
+module.exports = (app, {
+        is404Handler,
+        logTraffic,
+        knownPaths,
+        knownApiPaths,
+        knownPatterns,
+        knownApiPatterns
+    }) => {
+    if(logTraffic) logTraffic(app);
 
     Object.keys(responses).forEach(async key => {
         Object.keys(responses[key]).forEach(async path => {
             const response = responses[key][path];
-            if(isKnownPath(path).isKnown) {
+            if(isKnownPath(path,{knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}).isKnown) {
                 return;
             }
             app.all(path,async  (req, res) => {
@@ -1439,7 +1396,7 @@ module.exports = (app, is404Handler = false) => {
     });
 
     app.get('/newBotsRoute', (req, res) => {
-        const unhandledRoutes = getUnhandledRoutes();
+        const unhandledRoutes = getUnhandledRoutes(additionalEndpoints,{knownPaths, knownPatterns, knownApiPaths, knownApiPatterns});
         res.setHeader('Content-Type', 'text/plain');
         res.send(unhandledRoutes.join('\n'));
     });

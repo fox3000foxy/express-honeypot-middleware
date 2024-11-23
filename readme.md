@@ -22,7 +22,59 @@ Basic usage:
 const express = require('express');
 const app = express();
 // Initialize the honeypot middleware
-require('express-middleware-honeypot')(app);
+// Define known static paths
+const knownPaths = [
+    '/',
+    '/blogs',
+    '/write-blog',
+    '/logout',
+    '/login',
+    '/settings',
+    '/register',
+    '/contact',
+    '/cart',
+    '/support',
+    '/robots.txt',
+    '/favicon.ico',
+    '/products',
+    '/about',
+    '/ai',
+    '/productsDetails',
+    '/bots.txt',
+    '/robots.txt',
+    '/sitemap.xml',
+    '/traffic.txt',
+
+    // My exclusive paths
+    '/top',
+    '/newTop',
+];
+
+// Define known dynamic paths patterns
+const knownPatterns = [
+    /^\/blogs\/[^\/]+$/, // Matches /blogs/{blogId}
+    /^\/assets\/.*$/, // Matches /assets/*
+    /^\/blogs\/assets\/.*$/, // Matches /blogs/assets/*
+];
+
+// Define known API paths
+const knownApiPaths = [
+    '/api/cart',
+    '/api/cart/list'
+];
+
+// Define known API patterns
+const knownApiPatterns = [
+    /^\/api\/cart\/[^\/]+$/, // Matches /api/cart/{productId}
+    /^\/api\/cart\/update\/[^\/]+$/ // Matches /api/cart/update/{productId}
+];
+
+require('express-middleware-honeypot')(app, {
+    knownPaths,
+    knownPatterns,
+    knownApiPaths,
+    knownApiPatterns
+}); // Honeypot
 app.listen(3000, () => {
      console.log('Server running on port 3000');
 });
@@ -33,8 +85,60 @@ With 404 handler enabled (spoof PHP 404):
 ```javascript
 const express = require('express');
 const app = express();
-// Initialize with 404 handler
-require('express-middleware-honeypot')(app, true);
+// Define known static paths
+const knownPaths = [
+    '/',
+    '/blogs',
+    '/write-blog',
+    '/logout',
+    '/login',
+    '/settings',
+    '/register',
+    '/contact',
+    '/cart',
+    '/support',
+    '/robots.txt',
+    '/favicon.ico',
+    '/products',
+    '/about',
+    '/ai',
+    '/productsDetails',
+    '/bots.txt',
+    '/robots.txt',
+    '/sitemap.xml',
+    '/traffic.txt',
+
+    // My exclusive paths
+    '/top',
+    '/newTop',
+];
+
+// Define known dynamic paths patterns
+const knownPatterns = [
+    /^\/blogs\/[^\/]+$/, // Matches /blogs/{blogId}
+    /^\/assets\/.*$/, // Matches /assets/*
+    /^\/blogs\/assets\/.*$/, // Matches /blogs/assets/*
+];
+
+// Define known API paths
+const knownApiPaths = [
+    '/api/cart',
+    '/api/cart/list'
+];
+
+// Define known API patterns
+const knownApiPatterns = [
+    /^\/api\/cart\/[^\/]+$/, // Matches /api/cart/{productId}
+    /^\/api\/cart\/update\/[^\/]+$/ // Matches /api/cart/update/{productId}
+];
+
+require('express-middleware-honeypot')(app, {
+    knownPaths,
+    knownPatterns,
+    knownApiPaths,
+    knownApiPatterns,
+    is404Handler: true
+}); // Honeypot
 app.listen(3000, () => {
      console.log('Server running on port 3000');
 });
