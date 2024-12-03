@@ -1,6 +1,6 @@
 {
   "name": "express-middleware-honeypot",
-  "version": "1.0.9",
+  "version": "1.0.11",
   "description": "A middleware that creates a honeypot system to detect and track potential malicious requests while providing fake responses to common attack vectors. It is designed to be used as a development tool to test and analyze the security of your application or handle bot traffic not covered by the main responses. It actually spoof PHP server responses and covers additional endpoints not covered by the main responses.",
   "main": "index.js",
   "scripts": {
