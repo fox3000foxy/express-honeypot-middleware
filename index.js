@@ -1378,7 +1378,8 @@ const responses = {
         // "/sitemap.xml": { "status": "Sitemap active", "description": "Site sitemap file." },
         "/.well-known/traffic-advice": { "status": "Traffic Advice active", "description": "Traffic advice endpoint." },
         "/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php": { "status": "PHPUnit Eval active", "description": "Potential exploit for PHPUnit." }
-    }
+    },
+    "other": {}
 }
 
 
