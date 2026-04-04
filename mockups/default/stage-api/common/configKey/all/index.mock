@@ -1,0 +1,4 @@
+{
+  "status": "Common Config Key API active",
+  "description": "This endpoint retrieves all common configuration keys."
+}

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>Welcome to the Admin Dashboard</h1>
+    <p>This page serves as the main dashboard for admin users.</p>
+    <footer>
+        <p>Last updated: 2023-09-30T09:30:00Z</p>
+    </footer>
+</body>
+</html>

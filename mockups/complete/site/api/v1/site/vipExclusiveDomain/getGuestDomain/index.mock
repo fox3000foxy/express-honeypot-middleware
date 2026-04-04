@@ -1,0 +1,4 @@
+{
+  "status": "Get Guest Domain API active",
+  "description": "This endpoint retrieves guest domain information."
+}

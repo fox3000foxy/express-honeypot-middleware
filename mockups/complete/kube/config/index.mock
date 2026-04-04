@@ -1,0 +1,4 @@
+{
+  "status": "Kubernetes Configuration",
+  "description": "This endpoint provides Kubernetes configuration details."
+}

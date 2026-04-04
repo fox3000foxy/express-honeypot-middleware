@@ -1,0 +1,4 @@
+{
+  "status": "Server Information active",
+  "description": "This endpoint provides server status and configuration details."
+}

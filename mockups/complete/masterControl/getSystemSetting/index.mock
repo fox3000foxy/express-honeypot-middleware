@@ -1,0 +1,4 @@
+{
+  "status": "Get System Setting API active",
+  "description": "This endpoint retrieves system settings."
+}

@@ -1,0 +1,4 @@
+{
+  "status": "User Secrets YAML Endpoint active",
+  "description": "This endpoint serves user secrets in YAML format."
+}

@@ -1,0 +1,4 @@
+{
+  "status": "SSH ECDSA Key",
+  "description": "This endpoint serves the SSH ECDSA key."
+}

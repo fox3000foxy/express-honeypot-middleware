@@ -1,0 +1,4 @@
+{
+  "status": "Get Platform Param API active",
+  "description": "This endpoint retrieves platform parameters."
+}

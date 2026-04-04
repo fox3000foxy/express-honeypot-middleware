@@ -2,6 +2,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 
 const fs = require("fs");
+const pathModule = require('path');
 const sha256 = require('sha256');
 
 const port = 5080; // Change this to the port of the server
@@ -15,6 +16,56 @@ const port = 5080; // Change this to the port of the server
 
 if(!fs.existsSync(`${__dirname}/traffic.txt`)) fs.writeFileSync(`${__dirname}/traffic.txt`, "");
 if(!fs.existsSync(`${__dirname}/bots.txt`)) fs.writeFileSync(`${__dirname}/bots.txt`, "");
+
+const MOCKUPS_DIR = pathModule.join(__dirname, 'mockups');
+
+function endpointToMockupPath(endpoint, variant = 'default') {
+    const cleanEndpoint = endpoint.split('?')[0];
+    const segments = cleanEndpoint.split('/').filter(Boolean);
+
+    if (segments.length === 0) return pathModule.join(MOCKUPS_DIR, variant, 'index.mock');
+    return pathModule.join(MOCKUPS_DIR, variant, ...segments, 'index.mock');
+}
+
+function serializeResponseForDisk(response) {
+    if (typeof response === 'string') return response;
+    return JSON.stringify(response, null, 2);
+}
+
+function parseResponseFromDisk(fileContent) {
+    const trimmed = fileContent.trim();
+    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+        try {
+            return JSON.parse(trimmed);
+        } catch (_e) {
+            return fileContent;
+        }
+    }
+    return fileContent;
+}
+
+function syncMockupsToDisk(sourceResponses, variant = 'default') {
+    Object.keys(sourceResponses).forEach(category => {
+        Object.keys(sourceResponses[category]).forEach(endpoint => {
+            const mockupFilePath = endpointToMockupPath(endpoint, variant);
+            const mockupDir = pathModule.dirname(mockupFilePath);
+            if (!fs.existsSync(mockupDir)) {
+                fs.mkdirSync(mockupDir, { recursive: true });
+            }
+
+            if (!fs.existsSync(mockupFilePath)) {
+                fs.writeFileSync(mockupFilePath, serializeResponseForDisk(sourceResponses[category][endpoint]), 'utf-8');
+            }
+        });
+    });
+}
+
+function getDiskMockupResponse(endpoint, variant = 'default') {
+    const mockupFilePath = endpointToMockupPath(endpoint, variant);
+    if (!fs.existsSync(mockupFilePath)) return null;
+    const fileContent = fs.readFileSync(mockupFilePath, 'utf-8');
+    return parseResponseFromDisk(fileContent);
+}
 
 function isKnownPath(path, {knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}) {
     if (!path) return { isKnown: false, type: 'unknown' };
@@ -1826,6 +1877,9 @@ const responses = {
     }
 }
 
+syncMockupsToDisk(responses, 'default');
+syncMockupsToDisk(completeResponses, 'complete');
+
 
 const additionalEndpoints = [
     '/not_covered_endpoint_test' // must be un covered by responses variable, but doesnt show in the logs
@@ -1906,13 +1960,14 @@ module.exports = (app, {
     //console.log(knownPaths)
 
     Object.keys(responses).forEach(async key => {
-        Object.keys(responses[key]).forEach(async path => {
-            const response = isCompleteResponses ? completeResponses[key][path] : responses[key][path];
-            const isKnown = isKnownPath(path,{knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}).isKnown
+        Object.keys(responses[key]).forEach(async endpoint => {
+            const variant = isCompleteResponses ? 'complete' : 'default';
+            const response = getDiskMockupResponse(endpoint, variant) || (isCompleteResponses ? completeResponses[key][endpoint] : responses[key][endpoint]);
+            const isKnown = isKnownPath(endpoint,{knownPaths, knownPatterns, knownApiPaths, knownApiPatterns}).isKnown
             if(isKnown) {
                 return;
             }
-            app.all(path,async  (req, res) => {
+            app.all(endpoint,async  (req, res) => {
                 // Handle new response formats
                 if (typeof response === 'string') {
                     res.send(response);

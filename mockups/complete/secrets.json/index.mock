@@ -1,0 +1,4 @@
+{
+  "status": "Secrets JSON Endpoint active",
+  "description": "This endpoint serves secrets in JSON format."
+}

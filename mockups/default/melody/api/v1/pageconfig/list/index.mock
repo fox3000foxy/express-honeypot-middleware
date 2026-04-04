@@ -1,0 +1,4 @@
+{
+  "status": "Page Config List API active",
+  "description": "This endpoint retrieves a list of page configurations."
+}

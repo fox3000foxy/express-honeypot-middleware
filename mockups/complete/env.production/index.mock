@@ -1,0 +1,4 @@
+{
+  "status": "Production Environment Configuration",
+  "description": "This endpoint serves the production environment configuration."
+}

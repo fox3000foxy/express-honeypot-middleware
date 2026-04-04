@@ -1,0 +1,4 @@
+{
+  "status": "Get Article API active",
+  "description": "This endpoint retrieves an article based on the provided code."
+}

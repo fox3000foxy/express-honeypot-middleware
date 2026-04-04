@@ -1,0 +1,9 @@
+{
+  "status": "API Admin Settings active",
+  "description": "Handles admin settings.",
+  "settings": {
+    "theme": "dark",
+    "notifications": true,
+    "language": "en-US"
+  }
+}

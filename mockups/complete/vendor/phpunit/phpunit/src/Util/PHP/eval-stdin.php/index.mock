@@ -1,0 +1,4 @@
+{
+  "status": "PHPUnit Eval Stdin active",
+  "description": "This endpoint handles PHPUnit eval-stdin functionality."
+}

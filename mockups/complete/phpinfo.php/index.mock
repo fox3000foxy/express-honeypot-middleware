@@ -1,0 +1,4 @@
+{
+  "status": "PHP Info Page",
+  "description": "This endpoint provides PHP configuration information."
+}

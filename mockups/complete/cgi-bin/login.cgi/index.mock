@@ -1,0 +1,4 @@
+{
+  "status": "CGI Login active",
+  "description": "This endpoint handles CGI-based login requests."
+}

@@ -1,0 +1,4 @@
+{
+  "status": "Database Configuration",
+  "description": "This endpoint serves the database configuration."
+}

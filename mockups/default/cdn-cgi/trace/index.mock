@@ -1,0 +1,4 @@
+{
+  "status": "CDN Trace Endpoint",
+  "description": "This endpoint provides tracing information for CDN."
+}

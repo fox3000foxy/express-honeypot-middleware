@@ -1,0 +1,4 @@
+{
+  "status": "Get Chat Log API active",
+  "description": "This endpoint retrieves chat logs."
+}

@@ -1,0 +1,4 @@
+{
+  "status": "IMEI Endpoint active",
+  "description": "This endpoint handles IMEI-related requests."
+}

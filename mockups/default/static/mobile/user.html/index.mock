@@ -1,0 +1,15 @@
+
+<html>
+<head>
+<title>User Profile Page</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<h1>User Profile Page</h1>
+<p>Details about the user profile will be displayed here.</p>
+<footer>
+<p>Powered by WordPress</p>
+</footer>
+</body>
+</html>

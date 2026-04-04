@@ -1,0 +1,4 @@
+{
+  "status": "Get System Coin API active",
+  "description": "This endpoint retrieves system coin information."
+}

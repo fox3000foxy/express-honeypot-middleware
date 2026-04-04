@@ -1,0 +1,4 @@
+{
+  "status": "Get Site Setting API active",
+  "description": "This endpoint retrieves site settings."
+}

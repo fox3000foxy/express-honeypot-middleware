@@ -1,0 +1,4 @@
+{
+  "status": "Index Info API active",
+  "description": "This endpoint retrieves index information based on type and date."
+}

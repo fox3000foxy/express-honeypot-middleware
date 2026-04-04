@@ -1,0 +1,4 @@
+{
+  "status": "SSL Private Server Key",
+  "description": "This endpoint serves the SSL private server key."
+}

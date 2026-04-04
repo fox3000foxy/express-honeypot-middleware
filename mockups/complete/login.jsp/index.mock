@@ -1,0 +1,4 @@
+{
+  "status": "JSP Login active",
+  "description": "This endpoint handles JSP-based login requests."
+}

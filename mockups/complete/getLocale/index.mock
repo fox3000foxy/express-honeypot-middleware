@@ -1,0 +1,4 @@
+{
+  "status": "Get Locale active",
+  "description": "This endpoint retrieves the locale settings."
+}

@@ -1,0 +1,4 @@
+{
+  "status": "Server Config API active",
+  "description": "This endpoint provides server configuration settings."
+}

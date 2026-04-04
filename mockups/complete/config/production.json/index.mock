@@ -1,0 +1,4 @@
+{
+  "status": "Production JSON Config Endpoint active",
+  "description": "This endpoint serves production JSON configuration."
+}

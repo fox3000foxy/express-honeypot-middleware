@@ -1,0 +1,4 @@
+{
+  "status": "Docker Compose Config Endpoint active",
+  "description": "This endpoint serves Docker Compose configuration."
+}

@@ -1,0 +1,4 @@
+{
+  "status": "Get Init Source API active",
+  "description": "This endpoint retrieves initial source data."
+}

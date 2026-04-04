@@ -1,0 +1,4 @@
+{
+  "status": "SSH Ed25519 Key",
+  "description": "This endpoint serves the SSH Ed25519 key."
+}

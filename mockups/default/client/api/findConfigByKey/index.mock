@@ -1,0 +1,4 @@
+{
+  "status": "Find Config By Key API active",
+  "description": "This endpoint retrieves configuration by key."
+}

@@ -1,0 +1,4 @@
+{
+  "status": "Kline Chart active",
+  "description": "This endpoint provides 1-minute kline data."
+}

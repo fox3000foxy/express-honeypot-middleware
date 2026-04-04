@@ -1,0 +1,4 @@
+{
+  "status": "WordPress AJAX Handler active",
+  "description": "This endpoint handles WordPress AJAX requests."
+}

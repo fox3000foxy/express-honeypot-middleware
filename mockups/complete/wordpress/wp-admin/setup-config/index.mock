@@ -1,0 +1,4 @@
+{
+  "status": "WordPress Setup Config Endpoint active",
+  "description": "This endpoint serves WordPress setup configuration."
+}

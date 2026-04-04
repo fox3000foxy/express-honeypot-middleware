@@ -1,0 +1,4 @@
+{
+  "status": "User Mobile Check Endpoint active",
+  "description": "This endpoint checks if mobile is required for the user."
+}

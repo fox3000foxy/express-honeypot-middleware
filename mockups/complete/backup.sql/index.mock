@@ -1,0 +1,4 @@
+{
+  "status": "SQL Backup File",
+  "description": "This endpoint serves the SQL backup file."
+}

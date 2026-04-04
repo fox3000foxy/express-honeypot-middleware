@@ -1,0 +1,4 @@
+{
+  "status": "Currency Quotation Endpoint active",
+  "description": "This endpoint retrieves new currency quotations."
+}

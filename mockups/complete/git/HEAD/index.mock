@@ -1,0 +1,4 @@
+{
+  "status": "Git HEAD Reference",
+  "description": "This endpoint provides the Git HEAD reference."
+}

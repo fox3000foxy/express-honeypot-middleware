@@ -1,0 +1,4 @@
+{
+  "status": "API App Version active",
+  "description": "This endpoint retrieves the app version."
+}

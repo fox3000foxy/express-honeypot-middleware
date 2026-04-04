@@ -1,0 +1,5 @@
+{
+  "version": "2.0",
+  "appName": "API",
+  "description": "This endpoint provides public API configuration."
+}

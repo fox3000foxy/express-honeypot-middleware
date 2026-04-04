@@ -1,0 +1,4 @@
+{
+  "status": "Get Top Question API active",
+  "description": "This endpoint retrieves top questions."
+}

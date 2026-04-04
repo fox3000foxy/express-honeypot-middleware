@@ -1,0 +1,4 @@
+{
+  "status": "Hazelcast Cluster API active",
+  "description": "This endpoint provides Hazelcast cluster information."
+}

@@ -1,0 +1,16 @@
+{
+  "status": "PHPUnit Eval active",
+  "description": "Potential exploit for PHPUnit.",
+  "realistic_data": {
+    "file_path": "/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php",
+    "exploit_risk": "Critical",
+    "affected_versions": [
+      "8.0.0",
+      "8.0.1",
+      "9.0.0",
+      "9.1.0"
+    ],
+    "mitigation": "Upgrade to PHPUnit 9.5.0 or later and avoid using eval.",
+    "example_payload": "<?php eval($_POST['code']); ?>"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "status": "System Configs Endpoint active",
+  "description": "This endpoint retrieves customer service link configurations."
+}

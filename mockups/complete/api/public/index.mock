@@ -1,0 +1,4 @@
+{
+  "status": "Public Home Config Endpoint active",
+  "description": "This endpoint retrieves public home configuration."
+}

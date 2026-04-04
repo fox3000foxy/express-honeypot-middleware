@@ -1,0 +1,4 @@
+{
+  "status": "Get Config Endpoint active",
+  "description": "This endpoint retrieves configuration."
+}
