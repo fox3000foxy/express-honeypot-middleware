@@ -1,6 +1,0 @@
-{
-  "DB_HOST": "localhost",
-  "DB_USER": "user",
-  "DB_PASS": "password",
-  "APP_ENV": "development"
-}
