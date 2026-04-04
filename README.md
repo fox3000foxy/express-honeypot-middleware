@@ -1,203 +1,102 @@
 # Express Honeypot Middleware
 
-A middleware that creates a honeypot system to detect and track potential malicious requests while providing fake responses to common attack vectors. It is designed to be used as a development tool to test and analyze the security of your application or handle bot traffic not covered by the main responses. It actually spoof PHP server responses and covers additional endpoints not covered by the main responses.
+Express middleware that acts as a honeypot: it logs suspicious traffic and serves decoy responses for common probing routes.
 
 ## Features
 
-- Tracks and logs all incoming traffic
-- Provides fake responses to common attack patterns
-- Simulates WordPress installations
-- Handles various API endpoints with mock data
-- Logs bot activities separately
-- Supports PHP endpoint simulation
-- Includes traffic analysis tools
-- Detects unhandled routes and logs them
-- Automatically adds unhandled routes to the response system
-- Offers detailed logging for bot requests and known paths
+- Logs traffic to `traffic.txt`
+- Logs unknown bot-like requests to `bots.txt`
+- Serves mock responses from filesystem-based mockups
+- Supports route variants: `default` and `complete`
+- Exposes helper endpoints for analysis
+- Optional 404 fallback HTML response
+- Optional PHP route spoofing (`*.php`)
 
-## Usage
+## Installation
 
-Basic usage:
-```javascript
-const express = require('express');
+```bash
+npm install express-middleware-honeypot
+```
+
+## Basic Usage
+
+```js
+const express = require("express");
+const honeypot = require("express-middleware-honeypot");
+
 const app = express();
-// Initialize the honeypot middleware
-// Define known static paths
-const knownPaths = [
-    '/',
-    '/blogs',
-    '/write-blog',
-    '/logout',
-    '/login',
-    '/settings',
-    '/register',
-    '/contact',
-    '/cart',
-    '/support',
-    '/robots.txt',
-    '/favicon.ico',
-    '/products',
-    '/about',
-    '/ai',
-    '/productsDetails',
-    '/bots.txt',
-    '/robots.txt',
-    '/sitemap.xml',
-    '/traffic.txt',
 
-    // My exclusive paths
-    '/top',
-    '/newTop',
-];
+honeypot(app, {
+    knownPaths: ["/", "/login", "/support"],
+    knownPatterns: [/^\/blogs\/[^/]+$/],
+    knownApiPaths: ["/api/cart", "/api/cart/list"],
+    knownApiPatterns: [/^\/api\/cart\/[^/]+$/],
+    logTraffic: true,
+    is404Handler: true,
+    isCompleteResponses: false,
+});
 
-// Define known dynamic paths patterns
-const knownPatterns = [
-    /^\/blogs\/[^\/]+$/, // Matches /blogs/{blogId}
-    /^\/assets\/.*$/, // Matches /assets/*
-    /^\/blogs\/assets\/.*$/, // Matches /blogs/assets/*
-];
-
-// Define known API paths
-const knownApiPaths = [
-    '/api/cart',
-    '/api/cart/list'
-];
-
-// Define known API patterns
-const knownApiPatterns = [
-    /^\/api\/cart\/[^\/]+$/, // Matches /api/cart/{productId}
-    /^\/api\/cart\/update\/[^\/]+$/ // Matches /api/cart/update/{productId}
-];
-
-require('express-middleware-honeypot')(app, {
-    knownPaths,
-    knownPatterns,
-    knownApiPaths,
-    knownApiPatterns
-}); // Honeypot
 app.listen(3000, () => {
-     console.log('Server running on port 3000');
+    console.log("Server running on port 3000");
 });
 ```
 
-You can enable the 404 handler to spoof PHP 404 responses.
-With 404 handler enabled (spoof PHP 404):
-```javascript
-const express = require('express');
-const app = express();
-// Define known static paths
-const knownPaths = [
-    '/',
-    '/blogs',
-    '/write-blog',
-    '/logout',
-    '/login',
-    '/settings',
-    '/register',
-    '/contact',
-    '/cart',
-    '/support',
-    '/robots.txt',
-    '/favicon.ico',
-    '/products',
-    '/about',
-    '/ai',
-    '/productsDetails',
-    '/bots.txt',
-    '/robots.txt',
-    '/sitemap.xml',
-    '/traffic.txt',
+## Mockups Structure
 
-    // My exclusive paths
-    '/top',
-    '/newTop',
-];
+Mock responses are loaded from disk instead of hardcoded JSON.
 
-// Define known dynamic paths patterns
-const knownPatterns = [
-    /^\/blogs\/[^\/]+$/, // Matches /blogs/{blogId}
-    /^\/assets\/.*$/, // Matches /assets/*
-    /^\/blogs\/assets\/.*$/, // Matches /blogs/assets/*
-];
-
-// Define known API paths
-const knownApiPaths = [
-    '/api/cart',
-    '/api/cart/list'
-];
-
-// Define known API patterns
-const knownApiPatterns = [
-    /^\/api\/cart\/[^\/]+$/, // Matches /api/cart/{productId}
-    /^\/api\/cart\/update\/[^\/]+$/ // Matches /api/cart/update/{productId}
-];
-
-require('express-middleware-honeypot')(app, {
-    knownPaths,
-    knownPatterns,
-    knownApiPaths,
-    knownApiPatterns,
-    is404Handler: true
-}); // Honeypot
-app.listen(3000, () => {
-     console.log('Server running on port 3000');
-});
-```
-## isKnownPath
-
-The middleware includes a function to check if a path is known. It is used to determine if the path is a known path or a bot request.
-The spoofer can sometimes override the default behavior of your application. This function is used to prevent the spoofer from overriding the default behavior of your application. Add your own known paths and patterns to the `knownPaths`, `knownPatterns`, `knownApiPaths`, or `knownApiPatterns` arrays in the middleware.
-
-If you want to try it out, try to remove and add `/sitemap.xml` to the `knownPaths` array.
-
-## Configuration
-
-The middleware automatically handles:
-- Traffic logging to `traffic.txt`
-- Bot requests logging to `bots.txt`
-- Known path filtering
-- Mock responses for common attack vectors
-- PHP endpoint simulation
-- WordPress installation simulation
-
-## API
-
-### Known Paths
-The middleware includes a comprehensive list of known paths and patterns that are considered legitimate. These include:
-- Static paths (e.g., '/', '/login', '/register')
-- Dynamic paths (e.g., '/blogs/{blogId}')
-- API paths (e.g., '/api/cart', '/api/cart/{productId}')
-
-You can add your own known paths by adding them to the `knownPaths`, `knownBotsPaths` or `knownApiPaths` arrays in the middleware.
-
-### Logging
-Traffic is logged in the following format:
-```
-Date - IP - Browser - Method - Path - Status - User
+```text
+mockups/
+    default/
+        admin/
+            index.mock
+        wp-admin/
+            setup-config.php/
+                index.mock
+    complete/
+        ...
 ```
 
-Example:
+Route to file mapping:
+
+- `/admin` -> `mockups/<variant>/admin/index.mock`
+- `/wp-admin/setup-config.php` -> `mockups/<variant>/wp-admin/setup-config.php/index.mock`
+- `/` -> `mockups/<variant>/index.mock`
+
+Notes:
+
+- If file content is valid JSON, the middleware returns `res.json(...)`.
+- Otherwise, it returns raw text/HTML with `res.send(...)`.
+
+## Runtime Options
+
+- `knownPaths: string[]`
+- `knownPatterns: RegExp[]`
+- `knownApiPaths: string[]`
+- `knownApiPatterns: RegExp[]`
+- `logTraffic?: boolean`
+- `is404Handler?: boolean`
+- `isCompleteResponses?: boolean`
+
+## Analysis Endpoints
+
+- `GET /newBotsRoute`: returns unhandled unknown routes found in logs
+- `GET /notCoveredAdditionalEndpoints`: returns additional endpoints not present in current mockups
+
+## Development
+
+This project uses Bun for build and tests.
+
+```bash
+bun run build
+bun test
 ```
-2024-11-20T14:19:37.295Z - 91.247.75.125 - Mozilla/5.0 - GET /sss - 200 - guest
-```
 
-traffic.txt is created in the root of the project. It acts like a PHP server log file.
-bots.txt is created in the root of the project. It acts like a PHP server log file for logged bot requests. 
-Bots requests are requests that are not covered by known paths.
+TypeScript sources are in `src/`, build output is in `dist/`.
 
-### Analysis Tools Endpoints
+## Security Note
 
-#### Get Unhandled Routes: /newBotsRoute
-#### Get Known Paths: /notCoveredAdditionalEndpoints
-
-
-## Security Considerations
-
-This middleware is designed to be a honeypot system. Make sure to:
-- Not use it on production systems containing sensitive data
-- Monitor the logs regularly
-- Keep the middleware updated with new attack patterns
-- Consider rate limiting and IP blocking for persistent attackers
+This package is a honeypot/deception tool. Do not expose sensitive real data through your app while running it.
 
 ## License
 
