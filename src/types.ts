@@ -10,7 +10,6 @@ export interface HoneypotOptions extends KnownPathOptions {
   logTraffic?: boolean;
   isCompleteResponses?: boolean;
   additionalEndpoints?: string[];
-  mockupsDir?: string;
   enrichResponses?: boolean;
 }
 

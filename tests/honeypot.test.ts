@@ -1,19 +1,7 @@
 /// <reference types="bun-types" />
-import { describe, expect, test, afterAll } from "bun:test";
-import fs from "fs";
-import path from "path";
+import { describe, expect, test } from "bun:test";
 import { createHoneypot } from "../src/index";
 import type { RouteApp } from "../src/types";
-
-const MOCKUPS_DIR = path.resolve(__dirname, "..", "mockups");
-
-function cleanTestArtifact(endpoint: string) {
-  const rel = endpoint === "/" ? "index" : endpoint.replace(/^\//, "");
-  for (const v of ["default", "complete"]) {
-    const dir = path.join(MOCKUPS_DIR, v, rel);
-    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
-  }
-}
 
 function createMockApp(): RouteApp & { calls: string[] } {
   const calls: string[] = [];
@@ -36,11 +24,6 @@ function createMockApp(): RouteApp & { calls: string[] } {
 }
 
 describe("createHoneypot", () => {
-  afterAll(() => {
-    cleanTestArtifact("/not_covered_endpoint_test");
-    cleanTestArtifact("/custom-test");
-  });
-
   test("returns HoneypotInstance with expected keys", () => {
     const instance = createHoneypot({
       knownPaths: [],
@@ -48,7 +31,6 @@ describe("createHoneypot", () => {
       knownApiPaths: [],
       knownApiPatterns: [],
     });
-    cleanTestArtifact("/not_covered_endpoint_test");
 
     expect(instance).toHaveProperty("mocks");
     expect(instance).toHaveProperty("phpSpoofer");
@@ -141,7 +123,6 @@ describe("createHoneypot", () => {
       knownApiPatterns: [],
       additionalEndpoints: ["/custom-test"],
     });
-    cleanTestArtifact("/custom-test");
 
     expect(instance.getNotCoveredEndpoints()).toContain("/custom-test");
   });

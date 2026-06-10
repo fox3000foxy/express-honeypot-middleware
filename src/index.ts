@@ -1,4 +1,3 @@
-import path from "path";
 import { MockupRepository, MockupVariant } from "./services/mockupRepository";
 import { PathClassifier } from "./services/pathClassifier";
 import { TrafficService } from "./services/trafficService";
@@ -29,13 +28,6 @@ function isRouteApp(obj: unknown): obj is RouteApp {
   );
 }
 
-function resolveProjectRoot(): string {
-  if (typeof __dirname !== "undefined" && __dirname !== ".") {
-    return path.resolve(__dirname, "..");
-  }
-  return process.cwd();
-}
-
 export function createHoneypot(
   appOrOptions: RouteApp | HoneypotOptions,
   options?: HoneypotOptions,
@@ -61,10 +53,8 @@ export function createHoneypot(
 
   const knownPathOptions: KnownPathOptions = { knownPaths, knownPatterns, knownApiPaths, knownApiPatterns };
 
-  const projectRoot = resolveProjectRoot();
-  const mockupsDir = opts.mockupsDir || path.join(projectRoot, "mockups");
-  const mockupRepository = new MockupRepository(mockupsDir);
-  const trafficService = new TrafficService(projectRoot);
+  const mockupRepository = new MockupRepository();
+  const trafficService = new TrafficService(process.cwd());
   const unhandledRoutesService = new UnhandledRoutesService(trafficService, () =>
     mockupRepository.getVariantEndpoints("default"),
   );
@@ -85,13 +75,9 @@ export function createHoneypot(
   const allEndpoints = mockupRepository.getVariantEndpoints(variant);
 
   const mocks: Record<string, Middleware> = {};
-  const responseCache = new Map<string, unknown>();
 
   for (const endpoint of allEndpoints) {
     if (PathClassifier.isKnownPath(endpoint, knownPathOptions).isKnown) continue;
-
-    const response = mockupRepository.getMockupResponse(endpoint, variant);
-    responseCache.set(endpoint, response);
 
     const matches = endpoint === "/"
       ? (p: string) => p === "/"
@@ -100,23 +86,24 @@ export function createHoneypot(
     mocks[endpoint] = (req: any, res: any, next: any) => {
       if (!matches(req.path)) return next?.();
 
-      const cached = responseCache.get(endpoint);
-      if (cached === null || cached === undefined) {
+      const response = mockupRepository.getMockupResponse(endpoint, variant);
+      if (response === null || response === undefined) {
         res.status(500).send("Invalid response format");
         return;
       }
 
-      if (typeof cached === "string") {
-        res.send(cached);
-        return;
+      // Attempt to parse as JSON for enrichment, fall back to raw string
+      if (shouldEnrich) {
+        try {
+          const parsed = JSON.parse(response);
+          if (parsed && typeof parsed === "object") {
+            res.json(enrichResponse(parsed));
+            return;
+          }
+        } catch { /* not JSON — send as-is */ }
       }
 
-      if (typeof cached === "object") {
-        res.json(shouldEnrich ? enrichResponse(cached as Record<string, unknown>) : cached);
-        return;
-      }
-
-      res.status(500).send("Invalid response format");
+      res.send(response);
     };
   }
 
