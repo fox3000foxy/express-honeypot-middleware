@@ -75,6 +75,21 @@ app.all('/wp-admin', instance.mocks['/wp-admin']);
 
 `instance.mocks` is a `Record<string, Middleware>` keyed by endpoint path — pick the ones you want.
 
+### Custom headers
+
+Middleware that sets realistic response headers — spoofs `Server`, `X-Powered-By` (dynamically chosen based on file extension), security headers:
+
+```js
+app.use(instance.headersMiddleware);
+app.use(instance.middleware);
+```
+
+- `.php` → `X-Powered-By: PHP/8.1.12`
+- `.jsp` → `X-Powered-By: JSP/3.0`
+- `.aspx/.ashx/.asmx` → `X-Powered-By: ASP.NET`
+- `.do/.action` → `X-Powered-By: Servlet/3.0`
+- other paths → no `X-Powered-By` header
+
 ### Shorthand (auto-registers)
 
 ```js
