@@ -152,14 +152,14 @@ function genGithubWorkflow(v: Variant): string {
 function genJenkinsfile(v: Variant): string {
   return v === "default"
     ? `pipeline {\n  agent any\n  stages {\n    stage('Build') { steps { sh 'npm ci && npm run build' } }\n    stage('Test') { steps { sh 'npm test' } }\n  }\n}`
-    : `pipeline {\n    agent {\n        kubernetes {\n            yaml '''\n            spec:\n              containers:\n              - name: node\n                image: node:20-alpine\n                command: ['cat']\n                tty: true\n              - name: docker\n                image: docker:24.0.5-dind\n                securityContext:\n                  privileged: true\n            '''\n        }\n    }\n\n    environment {\n        REGISTRY = credentials('docker-registry')\n        DEPLOY_TOKEN = credentials('deploy-token')\n        KUBE_CONFIG = credentials('kubeconfig')\n        DATABASE_URL = credentials('database-url')\n        REDIS_URL = 'redis://redis-cluster.internal:6379'\n    }\n\n    options {\n        timeout(time: 30, unit: 'MINUTES')\n        disableConcurrentBuilds()\n    }\n\n    stages {\n        stage('Install') {\n            steps {\n                container('node') {\n                    sh 'npm ci --production=false'\n                }\n            }\n        }\n\n        stage('Lint') {\n            steps {\n                container('node') {\n                    sh 'npm run lint'\n                }\n            }\n        }\n\n        stage('Test') {\n            steps {\n                container('node') {\n                    sh 'npm run test:ci'\n                }\n            }\n            post {\n                always {\n                    junit 'reports/junit.xml'\n                    cobertura coberturaReportFile: 'reports/cobertura.xml'\n                }\n            }\n        }\n\n        stage('Build Docker Image') {\n            steps {\n                container('docker') {\n                    sh '''\n                        docker login -u ${REGISTRY_USR} -p ${REGISTRY_PSW} registry.acme-corp.io\n                        docker build -t registry.acme-corp.io/app:${GIT_COMMIT} .\n                        docker push registry.acme-corp.io/app:${GIT_COMMIT}\n                    '''\n                }\n            }\n        }\n\n        stage('Deploy Staging') {\n            steps {\n                container('kubectl') {\n                    sh '''\n                        echo ${KUBE_CONFIG} | base64 -d > /tmp/kubeconfig\n                        KUBECONFIG=/tmp/kubeconfig kubectl set image deployment/app \\\n                            app=registry.acme-corp.io/app:${GIT_COMMIT} -n staging\n                    '''\n                }\n            }\n        }\n\n        stage('Deploy Production') {\n            when { branch 'main' }\n            input { message 'Deploy to production?' }\n            steps {\n                container('kubectl') {\n                    sh '''\n                        echo ${KUBE_CONFIG} | base64 -d > /tmp/kubeconfig\n                        KUBECONFIG=/tmp/kubeconfig kubectl set image deployment/app \\\n                            app=registry.acme-corp.io/app:${GIT_COMMIT} -n production\n                    '''\n                }\n            }\n        }\n    }\n\n    post {\n        failure {\n            slackSend(color: 'danger', message: "Build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}")\n        }\n        success {\n            slackSend(color: 'good', message: "Build succeeded: ${env.JOB_NAME} #${env.BUILD_NUMBER}")\n        }\n    }\n}`;
+    : `pipeline {\n    agent {\n        kubernetes {\n            yaml '''\n            spec:\n              containers:\n              - name: node\n                image: node:20-alpine\n                command: ['cat']\n                tty: true\n              - name: docker\n                image: docker:24.0.5-dind\n                securityContext:\n                  privileged: true\n            '''\n        }\n    }\n\n    environment {\n        REGISTRY = credentials('docker-registry')\n        DEPLOY_TOKEN = credentials('deploy-token')\n        KUBE_CONFIG = credentials('kubeconfig')\n        DATABASE_URL = credentials('database-url')\n        REDIS_URL = 'redis://redis-cluster.internal:6379'\n    }\n\n    options {\n        timeout(time: 30, unit: 'MINUTES')\n        disableConcurrentBuilds()\n    }\n\n    stages {\n        stage('Install') {\n            steps {\n                container('node') {\n                    sh 'npm ci --production=false'\n                }\n            }\n        }\n\n        stage('Lint') {\n            steps {\n                container('node') {\n                    sh 'npm run lint'\n                }\n            }\n        }\n\n        stage('Test') {\n            steps {\n                container('node') {\n                    sh 'npm run test:ci'\n                }\n            }\n            post {\n                always {\n                    junit 'reports/junit.xml'\n                    cobertura coberturaReportFile: 'reports/cobertura.xml'\n                }\n            }\n        }\n\n        stage('Build Docker Image') {\n            steps {\n                container('docker') {\n                    sh '''\n                        docker login -u \${REGISTRY_USR} -p \${REGISTRY_PSW} registry.acme-corp.io\n                        docker build -t registry.acme-corp.io/app:\${GIT_COMMIT} .\n                        docker push registry.acme-corp.io/app:\${GIT_COMMIT}\n                    '''\n                }\n            }\n        }\n\n        stage('Deploy Staging') {\n            steps {\n                container('kubectl') {\n                    sh '''\n                        echo \${KUBE_CONFIG} | base64 -d > /tmp/kubeconfig\n                        KUBECONFIG=/tmp/kubeconfig kubectl set image deployment/app \\\n                            app=registry.acme-corp.io/app:\${GIT_COMMIT} -n staging\n                    '''\n                }\n            }\n        }\n\n        stage('Deploy Production') {\n            when { branch 'main' }\n            input { message 'Deploy to production?' }\n            steps {\n                container('kubectl') {\n                    sh '''\n                        echo \${KUBE_CONFIG} | base64 -d > /tmp/kubeconfig\n                        KUBECONFIG=/tmp/kubeconfig kubectl set image deployment/app \\\n                            app=registry.acme-corp.io/app:\${GIT_COMMIT} -n production\n                    '''\n                }\n            }\n        }\n    }\n\n    post {\n        failure {\n            slackSend(color: 'danger', message: "Build failed: \${env.JOB_NAME} #\${env.BUILD_NUMBER}")\n        }\n        success {\n            slackSend(color: 'good', message: "Build succeeded: \${env.JOB_NAME} #\${env.BUILD_NUMBER}")\n        }\n    }\n}`;
 }
 
 // ─── NPM / PACKAGE ──────────────────────────────────────────────────────────
 
 function genNpmrc(v: Variant): string {
   return v === "default"
-    ? "registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
+    ? "registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=\${NPM_TOKEN}"
     : `registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n//npm.pkg.github.com/:_authToken=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n@acme-corp:registry=https://npm.pkg.github.com/\n@acme-corp:always-auth=true\nemail=devops@acme-corp.io\ninit-author-name=DevOps Bot\ninit-license=MIT`;
 }
 
@@ -198,6 +198,164 @@ function genBackupFile(v: Variant, ext: string): string {
   return v === "default"
     ? "# Backup file\n# Last modified: " + ts()
     : `# Backup file\n# Source: acme-corp.io production\n# Created: ${ts()}\n# Size: 45.2 KB\n# Contains: configuration, database credentials\n# WARNING: This file contains sensitive information`;
+}
+
+// ─── GRAPHQL ───────────────────────────────────────────────────────────────
+
+function genGraphql(v: Variant): string {
+  return v === "default"
+    ? JSON.stringify({ data: { __typename: "Query", health: "ok" } }, null, 2)
+    : JSON.stringify({
+      data: {
+        __typename: "Query",
+        health: "ok",
+        version: "2.4.1",
+        schema: { queryType: "Query", mutationType: "Mutation", types: 42, directives: 8 },
+        extensions: { tracing: { version: "1.0", timestamp: ts() } },
+      },
+    }, null, 2);
+}
+
+function genGraphiql(v: Variant): string {
+  if (v === "default") {
+    return html("GraphiQL", `<div id="graphiql" style="height:100vh"><h1>GraphiQL</h1><p>Loading GraphQL IDE...</p></div>`);
+  }
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GraphiQL</title>
+<style>body{margin:0;padding:0;height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}</style>
+</head>
+<body>
+<div id="graphiql" style="height:100vh">
+<div style="padding:40px;text-align:center">
+<h1>GraphiQL — Interactive Query Browser</h1>
+<p>GraphQL endpoint: <code>https://api.acme-corp.io/graphql</code></p>
+<p>Introspection: enabled | Tracing: enabled</p>
+</div>
+</div>
+</body>
+</html>`;
+}
+
+// ─── HEALTH / METRICS ──────────────────────────────────────────────────────
+
+function genHealth(v: Variant): string {
+  return v === "default"
+    ? JSON.stringify({ status: "healthy", uptime: Math.floor(Math.random() * 86400 * 30) }, null, 2)
+    : JSON.stringify({
+      status: "healthy", timestamp: ts(), version: "2.4.1",
+      uptime: Math.floor(Math.random() * 86400 * 30),
+      checks: {
+        database: { status: "up", latency_ms: Math.floor(Math.random() * 10) + 1 },
+        redis: { status: "up", latency_ms: Math.floor(Math.random() * 5) + 1 },
+        disk: { status: "ok", usage_percent: Math.floor(Math.random() * 30) + 40 },
+        memory: { status: "ok", usage_percent: Math.floor(Math.random() * 20) + 50 },
+      },
+    }, null, 2);
+}
+
+function genMetrics(v: Variant): string {
+  return v === "default"
+    ? `# HELP http_requests_total Total HTTP requests\n# TYPE http_requests_total counter\nhttp_requests_total{method="GET",status="200"} ${Math.floor(Math.random() * 100000)}\nhttp_requests_total{method="POST",status="200"} ${Math.floor(Math.random() * 50000)}`
+    : `# HELP http_requests_total Total HTTP requests\n# TYPE http_requests_total counter\nhttp_requests_total{method="GET",status="200"} ${Math.floor(Math.random() * 100000)}\nhttp_requests_total{method="POST",status="200"} ${Math.floor(Math.random() * 50000)}\nhttp_requests_total{method="GET",status="404"} ${Math.floor(Math.random() * 5000)}\n\n# HELP http_request_duration_seconds Request latency\n# TYPE http_request_duration_seconds histogram\nhttp_request_duration_seconds_bucket{le="0.01"} ${Math.floor(Math.random() * 80000)}\nhttp_request_duration_seconds_bucket{le="0.05"} ${Math.floor(Math.random() * 95000)}\nhttp_request_duration_seconds_bucket{le="0.1"} ${Math.floor(Math.random() * 99000)}\nhttp_request_duration_seconds_bucket{le="+Inf"} ${Math.floor(Math.random() * 100000)}\n\n# HELP nodejs_memory_heap_used_bytes Node.js heap used\n# TYPE nodejs_memory_heap_used_bytes gauge\nnodejs_memory_heap_used_bytes ${Math.floor(Math.random() * 100000000) + 50000000}\n\n# HELP nodejs_memory_rss_bytes Node.js RSS\n# TYPE nodejs_memory_rss_bytes gauge\nnodejs_memory_rss_bytes ${Math.floor(Math.random() * 200000000) + 100000000}`;
+}
+
+function genPprof(v: Variant): string {
+  return v === "default"
+    ? j(v, { profiles: ["goroutine", "heap", "threadcreate", "block", "mutex", "cpu"] })
+    : j(v, { profiles: ["goroutine", "heap", "threadcreate", "block", "mutex", "cpu", "allocs", "mutex"], debug: 1, goroutines: Math.floor(Math.random() * 200) + 50, gc_cycles: Math.floor(Math.random() * 1000) });
+}
+
+// ─── SWAGGER / OPENAPI ─────────────────────────────────────────────────────
+
+function genSwagger(v: Variant): string {
+  return v === "default"
+    ? JSON.stringify({ openapi: "3.0.0", info: { title: "ACME Corp API", version: "2.4.1" }, paths: {} }, null, 2)
+    : JSON.stringify({
+      openapi: "3.0.3", info: { title: "ACME Corp Production API", version: "2.4.1", description: "Internal microservices API", contact: { name: "API Team", email: "api@acme-corp.io" } },
+      servers: [{ url: "https://api.acme-corp.io/v2", description: "Production" }, { url: "https://staging-api.acme-corp.io/v2", description: "Staging" }],
+      paths: {
+        "/users": { get: { summary: "List users", tags: ["users"], parameters: [{ name: "page", in: "query", schema: { type: "integer" } }], responses: { "200": { description: "User list" } } } },
+        "/orders": { get: { summary: "List orders", tags: ["orders"], responses: { "200": { description: "Order list" } } } },
+        "/health": { get: { summary: "Health check", responses: { "200": { description: "OK" } } } },
+      },
+      components: { securitySchemes: { bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" } } },
+    }, null, 2);
+}
+
+function genOpenapiJson(v: Variant): string {
+  return genSwagger(v);
+}
+
+function genSwaggerJson(v: Variant): string {
+  return genSwagger(v);
+}
+
+function genSwaggerUi(v: Variant): string {
+  if (v === "default") {
+    return html("Swagger UI", `<div id="swagger-ui"><h1>Swagger UI</h1><p>Loading API documentation...</p><p>Spec: /api-docs/swagger.json</p></div>`);
+  }
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Swagger UI — ACME Corp API</title>
+<style>body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}</style>
+</head>
+<body>
+<div id="swagger-ui" style="padding:40px">
+<h1>ACME Corp API Documentation</h1>
+<h2>API v2.4.1</h2>
+<p>Base URL: <code>https://api.acme-corp.io/v2</code></p>
+<p>Authentication: Bearer JWT token</p>
+<h3>Endpoints</h3>
+<ul>
+<li><strong>GET /users</strong> — List all users (paginated)</li>
+<li><strong>GET /orders</strong> — List orders</li>
+<li><strong>GET /health</strong> — Health check</li>
+<li><strong>POST /auth/login</strong> — Authenticate user</li>
+</ul>
+</div>
+</body>
+</html>`;
+}
+
+// ─── PHP SHELLS ────────────────────────────────────────────────────────────
+
+function genPhpShell(v: Variant, name: string): string {
+  return v === "default"
+    ? `<?php\n// ${name}\necho "Shell active";\n?>`
+    : `<?php\n// ${name} — ${ts()}\nerror_reporting(0);\nini_set('display_errors', 0);\nheader('Content-Type: text/plain');\nif(isset($_POST['cmd'])){echo shell_exec($_POST['cmd']);}else{echo "Usage: POST cmd=<command>";}\n?>`;
+}
+
+// ─── WINDOWS ───────────────────────────────────────────────────────────────
+
+function genWinIni(v: Variant): string {
+  return v === "default"
+    ? "[fonts]\n[extensions]\n[mci extensions]"
+    : `[fonts]\nCourier 10,12,15=COURE.FON\nMS Sans Serif 8,10,12,14,18,24=SSERIFE.FON\nMS Serif 8,10,12,14,18,24=SERIFE.FON\nSymbol 8,10,12,14,18,24=SYMBOLE.FON\n\n[extensions]\nwav=wavefile.wav\nmid=midfile.mid\nrmi=midfile.mid\navi=aviplay.avi\nmov=movfile.mov\n\n[mci extensions]\n.wav=wavefile\n.midi=Sequencer\n.mpg=MPEGVideo\n.avi=AVIVideo`;
+}
+
+function genIisWebConfig(v: Variant): string {
+  return v === "default"
+    ? `<configuration>\n  <system.web>\n    <compilation debug="true" />\n    <authentication mode="Windows" />\n  </system.web>\n</configuration>`
+    : `<?xml version="1.0" encoding="UTF-8"?>\n<configuration>\n  <system.webServer>\n    <security>\n      <requestFiltering>\n        <hiddenSegments>\n          <add segment="web.config" />\n          <add segment="app_data" />\n        </hiddenSegments>\n      </requestFiltering>\n    </security>\n    <rewrite>\n      <rules>\n        <rule name="HTTPS" stopProcessing="true">\n          <match url="(.*)" />\n          <conditions><add input="{HTTPS}" pattern="off" ignoreCase="true" /></conditions>\n          <action type="Redirect" url="https://{HTTP_HOST}/{R:1}" redirectType="Permanent" />\n        </rule>\n      </rules>\n    </rewrite>\n    <defaultDocument>\n      <files>\n        <add value="index.aspx" />\n        <add value="Default.aspx" />\n      </files>\n    </defaultDocument>\n  </system.webServer>\n  <connectionStrings>\n    <add name="MainDB" connectionString="Server=db-master-01.internal.acme-corp.io;Database=acme_prod;User Id=app_service;Password=aB3#dE5$fG7*hJ9;" providerName="System.Data.SqlClient" />\n  </connectionStrings>\n  <appSettings>\n    <add key="Environment" value="production" />\n    <add key="ApiKey" value="sk-abc123def456" />\n    <add key="JwtSecret" value="eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature" />\n  </appSettings>\n</configuration>`;
+}
+
+// ─── TEMP / PROC FILES ─────────────────────────────────────────────────────
+
+function genProcEnviron(v: Variant): string {
+  return v === "default"
+    ? "PATH=/usr/local/sbin:/usr/local/bin\nHOME=/root\nUSER=www-data"
+    : `HOME=/root\nLANG=en_US.UTF-8\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nNODE_ENV=production\nDB_HOST=db-master-01.internal.acme-corp.io\nDB_PASSWORD=aB3#dE5$fG7*hJ9\nREDIS_URL=redis://redis-cluster-01.internal.acme-corp.io:6379\nJWT_SECRET=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature\nAWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\nSTRIPE_KEY=sk_live_4eC39HqLyjWDarjtT1zdp7dc\nSENDGRID_KEY=SG.xxxxyyyyzzzz.111222333444555666777888999000`;
+}
+
+function genProcSelf(v: Variant): string {
+  return v === "default"
+    ? "current: /var/www/production/current\nexe: /usr/bin/node"
+    : `current: /var/www/production/current\nexe: /usr/bin/node\nfd:\n  0:/dev/null\n  1:pipe:[12345]\n  2:pipe:[12346]\n  3:socket:[12347]\n  4:/var/log/production/app.log\n  5:/var/lib/redis/dump.rdb\n  6:anon_inode:[eventpoll]`;
 }
 
 // ─── INFO PAGES ────────────────────────────────────────────────────────────
@@ -350,7 +508,7 @@ function genLoginPage(v: Variant, system: string): string {
 
 function genLanding(v: Variant, bank: string): string {
   if (v === "default") {
-    return JSON.stringify({ status: "Landing page active", bank, redirect_url: `https://${bank.toLowerCase()}.example.com/auth` }, null, 2);
+    return JSON.stringify({ status: "Landing page active", bank, redirect_url: `https://${bank.toLowerCase()}.acme-corp.io/auth` }, null, 2);
   }
   return `<!DOCTYPE html>
 <html lang="ru">
@@ -716,6 +874,31 @@ const ROUTES: RouteRule[] = [
     ? JSON.stringify({ symbol: (e.split("/").pop() || "BTC").toUpperCase(), price: 42150.00, change: "+2.34%" }, null, 2)
     : JSON.stringify({ symbol: (e.split("/").pop() || "BTC").toUpperCase(), price: 42150.00, open: 41200.00, high: 42580.00, low: 41050.00, volume: 1250000, change: "+2.34%", timestamp: ts(), exchange: "binance", status: "open" }, null, 2)) },
 
+  // ── PHP shells ──
+  { match: /shell\.php|cmd\.php|c99\.php|r57\.php|webshell|backdoor/, gen: param((e) => { const name = e.split("/").pop() || "shell"; return (v) => genPhpShell(v, name); }) },
+
+  // ── Windows paths ──
+  { match: /windows\\win\.ini|win\.ini/, gen: fixed(genWinIni) },
+  { match: /inetpub\\wwwroot\\web\.config|inetpub.*web\.config/, gen: fixed(genIisWebConfig) },
+
+  // ── Temp / proc ──
+  { match: /proc\/self\/environ/, gen: fixed(genProcEnviron) },
+  { match: /proc\/self\/fd/, gen: fixed(genProcSelf) },
+  { match: /tmp\/.*\.sql|var\/log\//, gen: param((e) => (v) => j(v, { path: e, status: "accessible", size: Math.floor(Math.random() * 1000000) })) },
+
+  // ── GraphQL ──
+  { match: /\/graphql$|\/graphql\//, gen: fixed(genGraphql) },
+  { match: /\/graphiql$/, gen: fixed(genGraphiql) },
+
+  // ── Health / Metrics / Debug ──
+  { match: /^\/health$|^\/healthz$|^\/alive$|^\/ready$|^\/readiness$|^\/liveness$/, gen: fixed(genHealth) },
+  { match: /^\/metrics$|^\/prometheus$/, gen: fixed(genMetrics) },
+  { match: /\/debug\/vars|\/debug\/pprof|_debug\//, gen: fixed(genPprof) },
+
+  // ── Swagger / OpenAPI ──
+  { match: /\/swagger\.json$|\/openapi\.json$|\/api-docs\/swagger\.json/, gen: param((e) => (v) => genSwagger(v)) },
+  { match: /\/swagger$|\/swagger\/|\/api-docs$|\/api-docs\//, gen: fixed(genSwaggerUi) },
+
   // ── Short paths ──
   { match: /^\/[a-zA-Z0-9_.-]{1,20}$/, gen: param((e) => (v) => genShortPath(v, e)) },
 ];
@@ -778,4 +961,4 @@ export function generateMockup(variant: Variant, endpoint: string): string | nul
 export { classify, classifySpecific, genCatchall, ts, matchesEndpoint, ROUTES, SPECIFIC_ROUTES };
 // ─── ENDPOINTS ──────────────────────────────────────────────────────────────
 
-export const ALL_ENDPOINTS = ["/","/$web/index.html","/+CSCOE+/logon.html","/.aws/credentials","/.env","/.env.production","/.git/HEAD","/.git/config","/.kube/config","/.ssh/id_ecdsa","/.ssh/id_ed25519","/.ssh/id_rsa","/.svn/wc.db","/.vscode/sftp.json","/.well-known/discord","/.well-known/traffic-advice","/262LBNFp","/2MTXvx","/3ds.php","/3ds1633693954432212","/3vt4yTCT","/5jshCV","/6bXX29bt","/6tJmP253","/8","/888","/999","/API/Web/chat.ashx","/C9KrpPhC","/Ctrls/GetSysCoin","/G5LZ2X3k","/H6W7VRDj","/Home/Get/getJnd28","/Home/GetInitSource","/Home/Index/api","/KLFzmbdm","/KQRDmgB","/Kd67Fq1x","/Kj5xBrWf","/LcMMvHcm","/N3qLdCWJ","/Pay_Index.html","/Public/Home/ecshe_css/main.css","/Public/Mobile/ecshe_css/wapmain.css","/Public/initJs.php","/Q8RBNw4z","/SP6YZWTP","/T8LMdb3N","/YRWnWHy7","/_vti_pvt/administrators.pwd","/_vti_pvt/authors.pwd","/_vti_pvt/service.pwd","/a","/about","/account_domain.php","/acubu","/admin","/admin/index.html","/admin/webadmin","/admin/webadmin.php","/ads.txt","/ajax/allcoin_a/id/0","/api/.env","/api/Business","/api/Event/basic","/api/Home/videoNew","/api/admin/settings.php","/api/app/indexList","/api/appVersion","/api/apps/config","/api/banner","/api/c/a","/api/client/app/config.do","/api/common/config","/api/config","/api/config/getkefu","/api/currency/quotation_new","/api/front/index","/api/getCustomLink","/api/home/customerService","/api/im/v2/app/config","/api/index/getConfig","/api/index/grailindex","/api/index/init","/api/index/web","/api/index/webconfig","/api/message/webInfo","/api/notice","/api/ping","/api/predict-whole-panel.do","/api/product/getPointStore","/api/public","/api/shares/hqStrList","/api/shop/getKF","/api/site/getInfo.do","/api/stock/getSingleStock.do","/api/system/systemConfigs/getCustomerServiceLink","/api/unSecurity/app/listAppVersionInfo","/api/uploads/apimap","/api/user/ismustmobile","/api/v/index/queryOfficePage","/api/v1/member/kefu","/api/version","/api/vue/transaction/config","/app","/app-ads.txt","/app/api/app/get_index","/appxz/index.html","/aws/credentials","/ay-1.html","/backup.sql","/backup.tar.gz","/backup.zip","/baidu.html","/banner.do","/biz/server/config","/blog","/bpffH5jB","/cabinet","/cdn-cgi/trace","/cgi-bin/login.cgi","/cgi/conf.bin","/client/api/findConfigByKey","/cloud-config.yml","/code1.html","/config.json","/config.php","/config.xml","/config.yaml","/config.yml","/config/database","/config/database.php","/config/production.json","/contact","/cx_platform/conf.json","/data/json/config.json","/database.sql","/ddoo_im","/dist/index.html","/dl1/index.html","/doc/index.html","/docker-compose.yml","/dsxs","/dump.sql","/dwcc/configxLxn/inxfx","/env","/env.production","/etc/shadow","/etc/ssl/private/server.key","/f/user/index","/fake-wordpress.zip","/fePublicInfo","/feed","/fns-886-75.html","/forerest/user/custSrv/findOne","/fpyB8SZ3","/friendGroup/list","/front/index/getSiteSetting","/getConfig/getArticle.do","/getConfig/listPopFrame.do","/getLocale","/git/HEAD","/git/config","/gpLFR5sr","/h5","/h5.2.taobao","/hazelcast/rest/cluster","/home.html","/home/help","/home/index","/home/index.html","/home/realtime/data","/homes","/htop","/iexchange/webtrader","/im","/im/App/config","/im/h5","/imei","/index.php","/index.php/Wap/Api/getBanner","/index.php/sign","/index/api/getweb","/index/aurl","/index/home/login.html","/index/index/getchatLog","/index/index/home","/index/index/info","/index/login","/index/login/index","/index/login/register","/index/police/index.html","/index/user/register","/index_sber","/index_sber.php","/infe/rest/fig/advertise/common.json","/jiaoyimao","/js/a.script","/js/post.js","/jym-wn","/kPKzkZzY","/kline/1m/1","/km.asmx/getPlatParam","/kube/config","/lander/-w--sber-chat_1720439685","/lander/05_042_offer_sber_chat_input_green_v3_nm","/lander/1_offer_sber_chat_input_green_v3_nm","/lander/gazinvest-forma9maymadrid-thanksqz9may/thank-QZ","/lander/gazprom-prelandergnidanewkomment-thanksstory2-objv2/land/thank-you","/lander/gp_newmain_calc_ru_land_obj_js_v2/index","/lander/gp_newmain_calc_ru_land_obj_js_v2/index.php","/lander/gpb_rus_short_obfs_nonetext","/lander/sber","/lander/sber-fix","/lander/sberchat5v4_tds_newcrm_028-vnutr/index","/lander/sberchat5v4_tds_newcrm_028-vnutr/index.php","/lander/sberchat5v4_tds_newcrm_038-vnutr_1721815245/index","/lander/sberchat5v4_tds_newcrm_038-vnutr_1721815245/index.php","/lander/sberquiz-2223-3","/lander/test","/lander/testsberv4-copy--1","/lander/testsberv4_1703110539","/leftDao","/leftDao.php","/login.jsp","/logon.htm","/logs","/m","/m.html","/m/allticker/1","/mall/toget/banner","/manage/account/login","/market/market-ws/iframe.html","/masterControl/getSystemSetting","/melody/api/v1/pageconfig/list","/merchant/code","/merchant/z/payment","/meta.json","/mhn8PLGw","/mindex.html","/mobile","/mobile/get_item_list","/mobile/index/home","/mobile/lists.html","/mobile/login.html","/mobile/v3/appSuperDownload.do","/mytio/config/base","/n4TWwtZ4","/n5cw4Z3Y","/n6PdMqLz","/newTop","/nice%20ports%2C/Tri%6Eity.txt%2ebak","/nnnnnnnnnnnnnnnnnnnnnnn","/otc","/other/getTopQuestion","/page","/pc.html","/phpinfo","/phpinfo.php","/platform","/portal/index/protocol.html","/pro/qb365","/procoin/config/all.do","/products","/proxy/games","/public/api/index/config","/q1gpDhK4","/qqWydpQ7","/qs","/refresher","/room/getRoomBangFans","/s_api/basic/download/info","/sb","/sberbank-quiz-4","/sberbank-quiz-v2","/sberchat008-prilca","/sbor_offerov/kripta/landing/lp_1","/secrets.json","/sellers.json","/server-info","/server.key","/setting/global","/site/api/v1/site/vipExclusiveDomain/getGuestDomain","/site/info","/sitemap.xml","/ssh/id_ecdsa","/ssh/id_ed25519","/ssh/id_rsa","/stage-api/common/configKey/all","/static/data/thirdgames.json","/static/mobile/user.html","/static/voice/default.wav","/step1.asp","/stock/mzhishu","/support/index","/svn/wc.db","/t85TjsNn","/tcn","/template/mb/lang/text-zh.json","/tink_chat","/tinkoff-v10-quiz","/unSecurity/app/config","/user/reg.php","/user_secrets.yml","/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin","/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php","/verification.asp","/vti_pvt/administrators.pwd","/vti_pvt/authors.pwd","/vti_pvt/service.pwd","/wap","/wap/api/exchangerateuserconfig!get.action","/wap/forward","/web.config","/well-known/discord","/well-known/traffic-advice","/wordpress/wp-admin/setup-config","/wordpress/wp-admin/setup-config.php","/wordpress/wp-content","/wp-admin","/wp-admin/admin-ajax","/wp-admin/setup-config.php","/wp-config","/wp-config.php","/wpR2pHDz","/xy","/z03.html","/zMmL28CN","/.ssh/authorized_keys","/etc/kubernetes/admin.conf","/.dockerenv","/proc/1/cgroup","/proc/self/cgroup","/.gitlab-ci.yml","/.github/workflows/ci.yml","/.github/workflows/deploy.yml","/.github/workflows/release.yml","/Jenkinsfile","/.npmrc","/etc/nginx/nginx.conf","/etc/apache2/apache2.conf","/backup.bak","/config.bak","/database.sql.gz","/init.lua.swp","/windows/win.ini","/inetpub/wwwroot/web.config"];
+export const ALL_ENDPOINTS = ["/","/$web/index.html","/+CSCOE+/logon.html","/.aws/credentials","/.env","/.env.production","/.git/HEAD","/.git/config","/.kube/config","/.ssh/id_ecdsa","/.ssh/id_ed25519","/.ssh/id_rsa","/.svn/wc.db","/.vscode/sftp.json","/.well-known/discord","/.well-known/traffic-advice","/262LBNFp","/2MTXvx","/3ds.php","/3ds1633693954432212","/3vt4yTCT","/5jshCV","/6bXX29bt","/6tJmP253","/8","/888","/999","/API/Web/chat.ashx","/C9KrpPhC","/Ctrls/GetSysCoin","/G5LZ2X3k","/H6W7VRDj","/Home/Get/getJnd28","/Home/GetInitSource","/Home/Index/api","/KLFzmbdm","/KQRDmgB","/Kd67Fq1x","/Kj5xBrWf","/LcMMvHcm","/N3qLdCWJ","/Pay_Index.html","/Public/Home/ecshe_css/main.css","/Public/Mobile/ecshe_css/wapmain.css","/Public/initJs.php","/Q8RBNw4z","/SP6YZWTP","/T8LMdb3N","/YRWnWHy7","/_vti_pvt/administrators.pwd","/_vti_pvt/authors.pwd","/_vti_pvt/service.pwd","/a","/about","/account_domain.php","/acubu","/admin","/admin/index.html","/admin/webadmin","/admin/webadmin.php","/ads.txt","/ajax/allcoin_a/id/0","/api/.env","/api/Business","/api/Event/basic","/api/Home/videoNew","/api/admin/settings.php","/api/app/indexList","/api/appVersion","/api/apps/config","/api/banner","/api/c/a","/api/client/app/config.do","/api/common/config","/api/config","/api/config/getkefu","/api/currency/quotation_new","/api/front/index","/api/getCustomLink","/api/home/customerService","/api/im/v2/app/config","/api/index/getConfig","/api/index/grailindex","/api/index/init","/api/index/web","/api/index/webconfig","/api/message/webInfo","/api/notice","/api/ping","/api/predict-whole-panel.do","/api/product/getPointStore","/api/public","/api/shares/hqStrList","/api/shop/getKF","/api/site/getInfo.do","/api/stock/getSingleStock.do","/api/system/systemConfigs/getCustomerServiceLink","/api/unSecurity/app/listAppVersionInfo","/api/uploads/apimap","/api/user/ismustmobile","/api/v/index/queryOfficePage","/api/v1/member/kefu","/api/version","/api/vue/transaction/config","/app","/app-ads.txt","/app/api/app/get_index","/appxz/index.html","/aws/credentials","/ay-1.html","/backup.sql","/backup.tar.gz","/backup.zip","/baidu.html","/banner.do","/biz/server/config","/blog","/bpffH5jB","/cabinet","/cdn-cgi/trace","/cgi-bin/login.cgi","/cgi/conf.bin","/client/api/findConfigByKey","/cloud-config.yml","/code1.html","/config.json","/config.php","/config.xml","/config.yaml","/config.yml","/config/database","/config/database.php","/config/production.json","/contact","/cx_platform/conf.json","/data/json/config.json","/database.sql","/ddoo_im","/dist/index.html","/dl1/index.html","/doc/index.html","/docker-compose.yml","/dsxs","/dump.sql","/dwcc/configxLxn/inxfx","/env","/env.production","/etc/shadow","/etc/ssl/private/server.key","/f/user/index","/fake-wordpress.zip","/fePublicInfo","/feed","/fns-886-75.html","/forerest/user/custSrv/findOne","/fpyB8SZ3","/friendGroup/list","/front/index/getSiteSetting","/getConfig/getArticle.do","/getConfig/listPopFrame.do","/getLocale","/git/HEAD","/git/config","/gpLFR5sr","/h5","/h5.2.taobao","/hazelcast/rest/cluster","/home.html","/home/help","/home/index","/home/index.html","/home/realtime/data","/homes","/htop","/iexchange/webtrader","/im","/im/App/config","/im/h5","/imei","/index.php","/index.php/Wap/Api/getBanner","/index.php/sign","/index/api/getweb","/index/aurl","/index/home/login.html","/index/index/getchatLog","/index/index/home","/index/index/info","/index/login","/index/login/index","/index/login/register","/index/police/index.html","/index/user/register","/index_sber","/index_sber.php","/infe/rest/fig/advertise/common.json","/jiaoyimao","/js/a.script","/js/post.js","/jym-wn","/kPKzkZzY","/kline/1m/1","/km.asmx/getPlatParam","/kube/config","/lander/-w--sber-chat_1720439685","/lander/05_042_offer_sber_chat_input_green_v3_nm","/lander/1_offer_sber_chat_input_green_v3_nm","/lander/gazinvest-forma9maymadrid-thanksqz9may/thank-QZ","/lander/gazprom-prelandergnidanewkomment-thanksstory2-objv2/land/thank-you","/lander/gp_newmain_calc_ru_land_obj_js_v2/index","/lander/gp_newmain_calc_ru_land_obj_js_v2/index.php","/lander/gpb_rus_short_obfs_nonetext","/lander/sber","/lander/sber-fix","/lander/sberchat5v4_tds_newcrm_028-vnutr/index","/lander/sberchat5v4_tds_newcrm_028-vnutr/index.php","/lander/sberchat5v4_tds_newcrm_038-vnutr_1721815245/index","/lander/sberchat5v4_tds_newcrm_038-vnutr_1721815245/index.php","/lander/sberquiz-2223-3","/lander/test","/lander/testsberv4-copy--1","/lander/testsberv4_1703110539","/leftDao","/leftDao.php","/login.jsp","/logon.htm","/logs","/m","/m.html","/m/allticker/1","/mall/toget/banner","/manage/account/login","/market/market-ws/iframe.html","/masterControl/getSystemSetting","/melody/api/v1/pageconfig/list","/merchant/code","/merchant/z/payment","/meta.json","/mhn8PLGw","/mindex.html","/mobile","/mobile/get_item_list","/mobile/index/home","/mobile/lists.html","/mobile/login.html","/mobile/v3/appSuperDownload.do","/mytio/config/base","/n4TWwtZ4","/n5cw4Z3Y","/n6PdMqLz","/newTop","/nice%20ports%2C/Tri%6Eity.txt%2ebak","/nnnnnnnnnnnnnnnnnnnnnnn","/otc","/other/getTopQuestion","/page","/pc.html","/phpinfo","/phpinfo.php","/platform","/portal/index/protocol.html","/pro/qb365","/procoin/config/all.do","/products","/proxy/games","/public/api/index/config","/q1gpDhK4","/qqWydpQ7","/qs","/refresher","/room/getRoomBangFans","/s_api/basic/download/info","/sb","/sberbank-quiz-4","/sberbank-quiz-v2","/sberchat008-prilca","/sbor_offerov/kripta/landing/lp_1","/secrets.json","/sellers.json","/server-info","/server.key","/setting/global","/site/api/v1/site/vipExclusiveDomain/getGuestDomain","/site/info","/sitemap.xml","/ssh/id_ecdsa","/ssh/id_ed25519","/ssh/id_rsa","/stage-api/common/configKey/all","/static/data/thirdgames.json","/static/mobile/user.html","/static/voice/default.wav","/step1.asp","/stock/mzhishu","/support/index","/svn/wc.db","/t85TjsNn","/tcn","/template/mb/lang/text-zh.json","/tink_chat","/tinkoff-v10-quiz","/unSecurity/app/config","/user/reg.php","/user_secrets.yml","/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin","/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php","/verification.asp","/vti_pvt/administrators.pwd","/vti_pvt/authors.pwd","/vti_pvt/service.pwd","/wap","/wap/api/exchangerateuserconfig!get.action","/wap/forward","/web.config","/well-known/discord","/well-known/traffic-advice","/wordpress/wp-admin/setup-config","/wordpress/wp-admin/setup-config.php","/wordpress/wp-content","/wp-admin","/wp-admin/admin-ajax","/wp-admin/setup-config.php","/wp-config","/wp-config.php","/wpR2pHDz","/xy","/z03.html","/zMmL28CN","/.ssh/authorized_keys","/etc/kubernetes/admin.conf","/.dockerenv","/proc/1/cgroup","/proc/self/cgroup","/.gitlab-ci.yml","/.github/workflows/ci.yml","/.github/workflows/deploy.yml","/.github/workflows/release.yml","/Jenkinsfile","/.npmrc","/etc/nginx/nginx.conf","/etc/apache2/apache2.conf","/backup.bak","/config.bak","/database.sql.gz","/init.lua.swp","/windows/win.ini","/inetpub/wwwroot/web.config","/graphql","/graphiql","/health","/healthz","/metrics","/prometheus","/debug/vars","/debug/pprof/","/swagger.json","/swagger","/swagger/","/api-docs","/api-docs/swagger.json","/shell.php","/cmd.php","/c99.php","/r57.php","/proc/self/environ","/proc/self/fd","/tmp/dump.sql","/tmp/backup.sql"];
