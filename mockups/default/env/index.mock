@@ -1,5 +1,0 @@
-DB_HOST=localhost
-DB_USER=root
-DB_PASS=s3cur3P@ss
-APP_ENV=development
-APP_DEBUG=true

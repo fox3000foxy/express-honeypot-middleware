@@ -1,9 +1,0 @@
-{
-  "code": 0,
-  "message": "ok",
-  "data": {
-    "type": "list",
-    "module": "friendGroup",
-    "status": "active"
-  }
-}

@@ -1,6 +1,0 @@
-{
-  "status": "ok",
-  "agent_id": "leftDao",
-  "task": "heartbeat",
-  "interval": 60
-}

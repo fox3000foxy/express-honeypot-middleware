@@ -1,5 +1,0 @@
-<?php
-// Dynamic route: /index.php/Wap/Api/getBanner
-header('Content-Type: application/json');
-echo json_encode(['status'=>'success','route'=>'/index.php/Wap/Api/getBanner','method'=>$_SERVER['REQUEST_METHOD']]);
-?>

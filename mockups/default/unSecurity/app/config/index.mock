@@ -1,9 +1,0 @@
-{
-  "code": 0,
-  "message": "ok",
-  "data": {
-    "type": "config",
-    "module": "app",
-    "status": "active"
-  }
-}

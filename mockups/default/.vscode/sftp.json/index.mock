@@ -1,8 +1,0 @@
-{
-  "code": 0,
-  "message": "ok",
-  "host": "production-server",
-  "protocol": "sftp",
-  "username": "deploy",
-  "remotePath": "/var/www/production"
-}

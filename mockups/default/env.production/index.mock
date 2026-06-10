@@ -1,3 +1,0 @@
-NODE_ENV=production
-API_URL=https://api.example.com
-SENTRY_DSN=https://sentry.io/12345

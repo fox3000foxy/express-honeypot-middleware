@@ -1,4 +1,0 @@
-app:
-  name: Application
-  env: production
-  debug: false

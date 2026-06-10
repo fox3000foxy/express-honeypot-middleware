@@ -1,9 +1,0 @@
-fl=123f456
-tls=TLSv1.3
-sni=plaintext
-warp=off
-colo=FRA
-http=http/2
-loc=FR
-visit_scheme=https
-ip=198.51.100.42

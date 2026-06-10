@@ -1,5 +1,0 @@
-<?php
-// Dynamic route: /index.php/sign
-header('Content-Type: application/json');
-echo json_encode(['status'=>'success','route'=>'/index.php/sign','method'=>$_SERVER['REQUEST_METHOD']]);
-?>

@@ -1,6 +1,0 @@
-{
-  "status": "ok",
-  "agent_id": "newTop",
-  "task": "heartbeat",
-  "interval": 60
-}
