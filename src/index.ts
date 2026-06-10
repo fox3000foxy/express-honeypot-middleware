@@ -148,14 +148,21 @@ export function createHoneypot(
     );
   };
 
-  const headersMiddleware: Middleware = (_req: any, res: any, next: any) => {
+  const headersMiddleware: Middleware = (req: any, res: any, next: any) => {
     res.setHeader("Server", "nginx/1.24.0");
-    res.setHeader("X-Powered-By", "Express");
     res.setHeader("X-Frame-Options", "SAMEORIGIN");
     res.setHeader("X-XSS-Protection", "1; mode=block");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Robots-Tag", "noindex, nofollow");
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+    // Realistic X-Powered-By based on file extension
+    const path = req.path || "";
+    if (path.endsWith(".php")) res.setHeader("X-Powered-By", "PHP/8.1.12");
+    else if (path.endsWith(".jsp")) res.setHeader("X-Powered-By", "JSP/3.0");
+    else if (path.endsWith(".aspx") || path.endsWith(".ashx") || path.endsWith(".asmx")) res.setHeader("X-Powered-By", "ASP.NET");
+    else if (path.endsWith(".do") || path.endsWith(".action")) res.setHeader("X-Powered-By", "Servlet/3.0");
+
     next();
   };
 
