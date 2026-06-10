@@ -505,257 +505,268 @@ function genCatchall(v: Variant, ep: string): string {
   }, null, 2);
 }
 
-// ─── CLASSIFIER ─────────────────────────────────────────────────────────────
+// ─── CLASSIFIER (Registry Pattern) ─────────────────────────────────────────
+
+type Matcher = string | RegExp | ((endpoint: string) => boolean);
+type GenFactory = (endpoint: string) => Gen;
+
+interface RouteRule {
+  match: Matcher;
+  gen: GenFactory;
+}
+
+function exact(path: string): Matcher { return path; }
+function fixed(g: Gen): GenFactory { return () => g; }
+function param(fn: (e: string) => Gen): GenFactory { return fn; }
+
+function matchesEndpoint(matcher: Matcher, endpoint: string): boolean {
+  if (typeof matcher === "string") return endpoint === matcher;
+  if (matcher instanceof RegExp) return matcher.test(endpoint);
+  return matcher(endpoint);
+}
+
+const ROUTES: RouteRule[] = [
+  // ── Root ──
+  { match: exact("/"), gen: fixed((v) => genGenericPage(v, "Home", "Home")) },
+
+  // ── Credentials / env ──
+  { match: (e) => e === "/.env" || e === "/env" || e === "/api/.env", gen: fixed(genEnv) },
+  { match: (e) => e === "/.env.production" || e === "/env.production", gen: fixed(genEnvProduction) },
+  { match: (e) => e === "/.aws/credentials" || e === "/aws/credentials", gen: fixed(genAwsCredentials) },
+
+  // ── SSH / system ──
+  { match: /id_rsa/, gen: param(() => (v) => genSshKey(v, "RSA")) },
+  { match: /id_ecdsa/, gen: param(() => (v) => genSshKey(v, "ECDSA")) },
+  { match: /id_ed25519/, gen: param(() => (v) => genSshKey(v, "ED25519")) },
+  { match: /authorized_keys/, gen: fixed(genSshAuthorizedKeys) },
+  { match: /secrets\.json$|secrets\.yml$|secrets\.yaml$/, gen: fixed(genSecretsJson) },
+
+  // ── Database / config ──
+  { match: (e) => e.includes("/config/database") && !e.endsWith(".php"), gen: fixed(genDatabaseConfig) },
+  { match: exact("/config/production.json"), gen: param(() => (v) => j(v, { environment: "production", region: "us-east-1" })) },
+  { match: /wp-config\.php$|wp-config$/, gen: fixed(genPhpConfig) },
+  { match: /config\.php$/, gen: param((e) => (v) => `<?php\nreturn ['app' => ['name' => 'App', 'env' => '${v === "default" ? "dev" : "production"}']];\n?>`) },
+
+  // ── Git ──
+  { match: /\.git\/config$|git\/config$/, gen: fixed(genGitConfig) },
+  { match: /\.git\/HEAD$|git\/HEAD$/, gen: param(() => (v) => `ref: refs/heads/${v === "default" ? "main" : "develop"}\n`) },
+
+  // ── Kubernetes / Docker ──
+  { match: /\.kube\/config|kube\/config/, gen: param(() => (v) => v === "default"
+    ? j(v, { current_context: "minikube" })
+    : `apiVersion: v1\nclusters:\n- cluster:\n    server: https://k8s-prod.acme-corp.io:6443\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t\n  name: prod\ncontexts:\n- context:\n    cluster: prod\n    user: admin\n  name: prod\ncurrent-context: prod\nusers:\n- name: admin\n  user:\n    token: eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50In0.signature\n`) },
+  { match: /etc\/kubernetes\/admin\.conf/, gen: param(() => (v) => v === "default"
+    ? j(v, { cluster: "prod-cluster", user: "admin" })
+    : `apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    server: https://k8s-prod.internal.acme-corp.io:6443\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR2akNDQXF1Z0F3SUJBZ0lKQUxmWjV0YjE3YjFzTUEwR0NTcUdTSWIzRFFFQkN3VUFNQlF4RWpBUUJnTlYKQkFNTUNXeDZZVGRVTUEwR0NTcUdTSWIzRFFFQkFNQmthVzUwYlc5eWFYUXRNREV4T1RVeE5EY3dPQ3dZTUFv\n  name: prod-admin\ncontexts:\n- context:\n    cluster: prod-admin\n    user: cluster-admin\n    namespace: production\n  name: prod-admin\ncurrent-context: prod-admin\nusers:\n- name: cluster-admin\n  user:\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t\n    client-key-data: LS0tLS1CRUdJTiBERS0tLS0t\npreferences: {}\n\n# Cluster credentials - production environment\n# Admin: admin@acme-corp.io\n# Last rotated: 2025-06-01\n# Expiry: 2026-06-01`) },
+  { match: /\.dockerenv$|dockerenv$/, gen: fixed(genDockerEnv) },
+  { match: /proc\/1\/cgroup|self\/cgroup/, gen: fixed(genProcCgroup) },
+
+  // ── CI/CD ──
+  { match: /\.gitlab-ci\.yml$/, gen: fixed(genGitlabCi) },
+  { match: /\.github\/workflows\/.*\.ya?ml$/, gen: fixed(genGithubWorkflow) },
+  { match: /Jenkinsfile$|jenkinsfile$/, gen: fixed(genJenkinsfile) },
+
+  // ── Package / NPM ──
+  { match: /\.npmrc$|npmrc/, gen: fixed(genNpmrc) },
+
+  // ── Web server configs ──
+  { match: /etc\/nginx\/nginx\.conf|etc\/nginx\/conf\.d\//, gen: fixed(genNginxConfig) },
+  { match: /etc\/apache2\/apache2\.conf|etc\/httpd\/httpd\.conf/, gen: fixed(genApacheConfig) },
+
+  // ── Backup files ──
+  { match: /\.bak$|\.old$|\.swp$/, gen: param((e) => { const ext = "." + e.split(".").pop(); return (v) => genBackupFile(v, ext); }) },
+  { match: /\.sql\.gz$/, gen: param(() => (v) => genBackupFile(v, ".sql.gz")) },
+
+  // ── System files ──
+  { match: /etc\/shadow$/, gen: fixed(genEtcShadow) },
+  { match: /etc\/ssl\/private\/server\.key$|server\.key$/, gen: fixed(genSslKey) },
+
+  // ── Info pages ──
+  { match: /phpinfo|phpinfo\.php$/, gen: fixed(genPhpInfo) },
+  { match: /server-info|server_info/, gen: fixed(genServerInfo) },
+
+  // ── SQL ──
+  { match: /dump\.sql$|backup\.sql$|database\.sql$/, gen: fixed(genSql) },
+
+  // ── Docker compose ──
+  { match: /docker-compose\.yml$/, gen: fixed(genDockerCompose) },
+
+  // ── Apache / IIS config ──
+  { match: /\.htaccess$|htaccess$|web\.config$/, gen: fixed(genHtaccess) },
+
+  // ── Admin pages ──
+  { match: (e) => e === "/admin" || e === "/admin/webadmin" || e === "/admin/index.html", gen: fixed(genAdminPage) },
+  { match: /wp-admin|\/wordpress\//, gen: fixed(genWpAdmin) },
+
+  // ── Login pages ──
+  { match: /login\.jsp$/, gen: param(() => (v) => genLoginPage(v, "JSP Portal")) },
+  { match: /logon\.(htm|html)/, gen: param(() => (v) => genLoginPage(v, "Secure Logon")) },
+  { match: /cgi-bin\/login/, gen: param(() => (v) => genLoginPage(v, "CGI Authentication")) },
+  { match: /step1\.asp$/, gen: param(() => (v) => genLoginPage(v, "ASP Step Verification")) },
+  { match: /verification\.asp$/, gen: param(() => (v) => genLoginPage(v, "Identity Verification")) },
+
+  // ── Static pages ──
+  { match: (e) => ["/about", "/blog", "/contact", "/products", "/cabinet", "/platform", "/page"].includes(e), gen: param((e) => { const label = e.replace("/", "").replace(/^\w/, (c) => c.toUpperCase()); return (v) => genGenericPage(v, label, label); }) },
+  { match: (e) => ["/home.html", "/m.html", "/mindex.html", "/pc.html", "/index.html"].includes(e), gen: fixed((v) => genGenericPage(v, "Home", "Home Page")) },
+
+  // ── Russian bank phishing ──
+  { match: /sber|tinkoff|gazprom|sberbank/, gen: param((e) => { const bank = e.includes("sber") || e.includes("sberbank") ? "СберБанк" : e.includes("tinkoff") ? "Тинькофф Банк" : "Газпромбанк"; return (v) => genLanding(v, bank); }) },
+  { match: /\/lander\//, gen: param(() => (v) => genLanding(v, "Банк")) },
+
+  // ── Config files ──
+  { match: /config\.yml$|config\.yaml$/, gen: param(() => (v) => `app:\n  name: Application\n  env: ${v === "default" ? "development" : "production"}\n  debug: ${v === "default"}\n`) },
+  { match: /config\.xml$/, gen: param(() => (v) => `<configuration><app><name>Application</name><env>${v === "default" ? "dev" : "prod"}</env></app></configuration>`) },
+  { match: /config\.json$|meta\.json$/, gen: param(() => (v) => j(v, { environment: v === "default" ? "dev" : "production" })) },
+  { match: /cloud-config\.yml$/, gen: param(() => (v) => `#cloud-config\npackage_upgrade: ${v !== "default"}\ntimezone: UTC\npackages:\n  - nginx\n  - mysql-server\n`) },
+
+  // ── Cloudflare / CDN ──
+  { match: /cdn-cgi\/trace/, gen: param(() => (v) => v === "default"
+    ? "visit_scheme=https\ncolo=LAX\nip=203.0.113.1\n"
+    : "fl=123f456\ntls=TLSv1.3\nsni=plaintext\nwarp=off\ncolo=FRA\nhttp=http/2\nloc=FR\nvisit_scheme=https\nip=198.51.100.42\n") },
+
+  // ── Sitemap / Ads ──
+  { match: /sitemap\.xml$/, gen: param(() => (v) => v === "default"
+    ? `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://acme-corp.io/</loc></url></urlset>`
+    : `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n<url><loc>https://acme-corp.io/</loc><priority>1.0</priority></url>\n<url><loc>https://acme-corp.io/about</loc><priority>0.8</priority></url>\n<url><loc>https://acme-corp.io/products</loc><priority>0.8</priority></url>\n<url><loc>https://acme-corp.io/contact</loc><priority>0.5</priority></url>\n</urlset>`) },
+  { match: /ads\.txt$/, gen: param(() => (v) => v === "default"
+    ? "google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n"
+    : "google.com, pub-9876543210987654, DIRECT, f08c47fec0942fa0\nacme-corp.io, 1234567, RESELLER, abcdef123456\n") },
+  { match: /sellers\.json$/, gen: param(() => (v) => v === "default"
+    ? j(v, { sellers: [{ seller_id: "12345", name: "ACME Corp", domain: "acme-corp.io" }] })
+    : j(v, { sellers: [{ seller_type: "PUBLISHER", seller_id: "987654", name: "ACME Corporation", domain: "acme-corp.io" }, { seller_type: "INTERMEDIARY", seller_id: "123456", name: "AdNetwork Pro", domain: "adnetwork.acme-corp.io" }] })) },
+
+  // ── Well-known / VSCode ──
+  { match: /\.well-known\/|well-known\//, gen: param(() => (v) => j(v, { service: "discord" })) },
+  { match: /\.vscode\/|vscode\//, gen: param(() => (v) => j(v, { host: "production-server", protocol: "sftp", username: "deploy", remotePath: "/var/www/production" })) },
+
+  // ── API endpoints ──
+  { match: (e) => e.startsWith("/api/") || e.includes("/api/") || e.endsWith(".do") || e.endsWith(".ashx") || e.endsWith(".cgi") || e.endsWith(".asp") || e.endsWith(".aspx"), gen: param((e) => (v) => j(v, { endpoint: e.split("/").pop() || "endpoint", count: v === "default" ? undefined : 42 })) },
+
+  // ── Module paths ──
+  { match: /^\/(index|app|mobile|wap|Home|im|client|site|front|public|static)\//, gen: param((e) => (v) => j(v, { endpoint: e.split("/").filter(Boolean).pop() || "data", module: e.split("/").filter(Boolean).slice(0, -1).pop() || "service", ts: ts() })) },
+
+  // ── Java action ──
+  { match: /\.do$|\.action$/, gen: param((e) => (v) => j(v, { action: e.split("/").pop()?.replace(/\.(do|action)$/, "") || "action", status: "ok" })) },
+
+  // ── Merchant ──
+  { match: /^\/merchant\//, gen: param((e) => (v) => genMerchant(v, e)) },
+
+  // ── Scanner paths ──
+  { match: /nice%20ports|hazelcast|cgi\/conf\.bin/, gen: param((e) => (v) => genScannerPath(v, e)) },
+
+  // ── C2 heartbeats ──
+  { match: /^\/[a-zA-Z0-9]{6,}$/, gen: param((e) => (v) => genC2Heartbeat(v, e)) },
+
+  // ── Chinese API ──
+  { match: /dao|jiaoyi|tcn|qs/, gen: param((e) => (v) => genChineseApi(v, e)) },
+
+  // ── SVN / ColdFusion ──
+  { match: /\/\.svn\/|\/svn\/|_vti_pvt|vti_pvt/, gen: param(() => (v) => v === "default"
+    ? JSON.stringify({ repository: "https://svn.acme-corp.io/project", revision: 12834, last_committer: "admin" }, null, 2)
+    : JSON.stringify({ repository: "https://svn.acme-corp.io/project/trunk", revision: 89234, last_committer: "admin", last_commit_date: ts(), files: 1243, authors: ["admin", "devops", "john.doe", "jane.smith"] }, null, 2)) },
+
+  // ── PHPUnit RCE ──
+  { match: /phpunit.*eval-stdin/, gen: param(() => (v) => v === "default" ? "RCE Enabled" : "HTTP/1.1 200 OK\nContent-Type: text/plain\n\nPHPUnit RCE: system('id') output: uid=33(www-data) gid=33(www-data) groups=33(www-data)") },
+
+  // ── PHP endpoints ──
+  { match: (e) => e.endsWith(".php") && !e.endsWith("config.php") && !e.includes("wp-"), gen: param((e) => (v) => v === "default"
+    ? JSON.stringify({ code: 0, message: "ok", php: "8.1.12", memory: "256M" }, null, 2)
+    : `<?php\n// ${e} endpoint\nheader('Content-Type: application/json');\necho json_encode([\n  'code' => 0,\n  'message' => 'ok',\n  'endpoint' => '${e}',\n  'php_version' => '8.1.12',\n  'memory' => '512M',\n  'execution_time' => '0.042s',\n  'db_status' => 'connected',\n  'cache_status' => 'hit',\n]);\n?>`) },
+
+  // ── HTML files ──
+  { match: /\.html$|\.htm$/, gen: param((e) => { const label = e.split("/").pop()?.replace(/\.html?$/, "") || "page"; return (v) => genGenericPage(v, label, label.replace(/^\w/, (c) => c.toUpperCase())); }) },
+
+  // ── JS files ──
+  { match: /\.js$|\.script$/, gen: param(() => (v) => v === "default"
+    ? "console.log('loaded');"
+    : `(function(){'use strict';var app=window.app||{};app.config={env:'production',debug:false,apiUrl:'https://api.acme-corp.io/v2',version:'2.4.1'};app.ready=function(fn){if(document.readyState!=='loading')fn();else document.addEventListener('DOMContentLoaded',fn);};app.ready(function(){console.log('App initialized');});window.app=app;})();`) },
+
+  // ── Archives ──
+  { match: /\.zip$|\.tar\.gz$|\.tgz$/, gen: param(() => (v) => v === "default" ? "PK\u0003\u0004\n# binary archive" : "PK\u0003\u0004\n# Archive: backup\n# Files: 234\n# Size: 1.2GB\n# Contains: database dump, uploads, configs\n# Created: " + ts()) },
+
+  // ── CSS ──
+  { match: /\.css$/, gen: param(() => (v) => v === "default"
+    ? "body{font-family:sans-serif;margin:0;padding:0}"
+    : "/* Main stylesheet v2.4.1 */\n*{margin:0;padding:0;box-sizing:border-box}\nbody{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#333;background:#f8f9fa;line-height:1.6}\n.container{max-width:1200px;margin:0 auto;padding:0 20px}\nheader{background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.1);padding:16px 0}\n.btn{display:inline-block;padding:10px 20px;border-radius:6px;font-size:14px;cursor:pointer;transition:all .2s}\n.btn-primary{background:#0066cc;color:#fff;border:none}\n.btn-primary:hover{background:#0052a3}") },
+
+  // ── JSON config ──
+  { match: /\.json$/, gen: param((e) => { const name = e.split("/").pop()?.replace(".json", "") || "config"; return (v) => j(v, { config_name: name, environment: v === "default" ? "dev" : "production", updated_at: ts() }); }) },
+
+  // ── SOAP / ASMX ──
+  { match: /\.asmx|\.asmx\//, gen: param((e) => { const action = e.split("/").pop() || "ServiceMethod"; return (v) => v === "default"
+    ? `<string xmlns="http://tempuri.org/">OK</string>`
+    : `<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><${action}Response xmlns="http://tempuri.org/"><${action}Result><status>success</status><data>processed</data><timestamp>${ts()}</timestamp></${action}Result></${action}Response></soap:Body></soap:Envelope>`; }) },
+
+  // ── PHP dynamic routes ──
+  { match: /index\.php\//, gen: param((e) => (v) => `<?php\n// Dynamic route: ${e}\nheader('Content-Type: application/json');\necho json_encode(['status'=>'success','route'=>'${e}','method'=>$_SERVER['REQUEST_METHOD']]);\n?>`) },
+
+  // ── Chinese e-commerce ──
+  { match: /taobao|1688|alibaba/, gen: param(() => (v) => v === "default"
+    ? JSON.stringify({ success: true, data: { items: [] } }, null, 2)
+    : JSON.stringify({ success: true, data: { items: [{ id: 1, title: "\u5546\u54c1\u540d\u79f0", price: 99.00, sales: 1000 }, { id: 2, title: "\u53e6\u4e00\u4e2a\u5546\u54c1", price: 199.00, sales: 500 }], total: 2, page: 1, pageSize: 20 }, requestId: `req_${Date.now().toString(36)}`, timestamp: Date.now() }, null, 2)) },
+
+  // ── Russian spam phishing ──
+  { match: /sbor_offerov|kripta|gaz|sber/, gen: param((e) => (v) => genLanding(v, e.includes("gaz") ? "Газпромбанк" : e.includes("sber") ? "СберБанк" : "Банк")) },
+
+  // ── Management login ──
+  { match: /\/manage\/|account\/login|\/admin\//, gen: param(() => (v) => genLoginPage(v, "Management Console")) },
+
+  // ── Stock / crypto ──
+  { match: /\/stock\/|\/kline|\/allticker|coin|trading|trader/, gen: param((e) => (v) => v === "default"
+    ? JSON.stringify({ symbol: (e.split("/").pop() || "BTC").toUpperCase(), price: 42150.00, change: "+2.34%" }, null, 2)
+    : JSON.stringify({ symbol: (e.split("/").pop() || "BTC").toUpperCase(), price: 42150.00, open: 41200.00, high: 42580.00, low: 41050.00, volume: 1250000, change: "+2.34%", timestamp: ts(), exchange: "binance", status: "open" }, null, 2)) },
+
+  // ── Short paths ──
+  { match: /^\/[a-zA-Z0-9_.-]{1,20}$/, gen: param((e) => (v) => genShortPath(v, e)) },
+];
+
+// ─── Specific catchall replacements (21 endpoints) ──────────────────────────
+
+const SPECIFIC_ROUTES: Record<string, Gen> = {
+  "/Ctrls/GetSysCoin": (v) => j(v, { coins: { usdt: 1250.50, btc: 0.042, eth: 2.5, total_usdt: 1250.50 }, locked: 0, withdrawable: 1250.50 }),
+  "/biz/server/config": (v) => j(v, { region: "ap-southeast-1", environment: "production", features: ["payment", "chat", "notification"], max_users: 100000, maintaince: false }),
+  "/dwcc/configxLxn/inxfx": (v) => j(v, { interface: "ConfigX", version: "2.1.3", params: { timeout: 30, retry: 3, cache_ttl: 300 } }),
+  "/f/user/index": (v) => j(v, { user_count: 42891, online_count: 1234, new_today: 89, male_ratio: 0.62, female_ratio: 0.38 }),
+  "/forerest/user/custSrv/findOne": (v) => j(v, { service_id: "CS-2025-8912", name: "Online Support", status: "online", queue_length: 3, avg_wait_sec: 45 }),
+  "/friendGroup/list": (v) => j(v, { groups: [], total: 0, page: 1, pageSize: 20 }),
+  "/home/help": (v) => j(v, { title: "Help Center", sections: ["Account", "Payment", "Security", "Trading"], contact: "support@acme-corp.io" }),
+  "/home/index": (v) => j(v, { banners: [{ id: 1, title: "Welcome", link: "/activity" }], notice: "System maintenance every Sunday 3:00-5:00 AM" }),
+  "/home/realtime/data": (v) => v === "default" ? JSON.stringify({ online_users: 1234, total_trades_24h: 56789, volume_24h: 1250000.50 }, null, 2) : JSON.stringify({ online_users: 1234, total_trades_24h: 56789, volume_24h: 1250000.50, avg_response_ms: 42, uptime_percent: 99.97, active_rooms: 89, timestamp: ts() }, null, 2),
+  "/mall/toget/banner": (v) => j(v, { banners: [{ id: 101, title: "Summer Sale", image_url: "https://cdn.acme-corp.io/banners/summer.jpg", link: "/activity/summer" }, { id: 102, title: "New Arrivals", image_url: "https://cdn.acme-corp.io/banners/new.jpg", link: "/mall/new" }] }),
+  "/masterControl/getSystemSetting": (v) => j(v, { maintenance_mode: false, registration_open: true, withdrawal_enabled: true, deposit_enabled: true, min_withdrawal: 10, max_withdrawal: 50000, currency: "USDT" }),
+  "/mytio/config/base": (v) => j(v, { app_name: "Mytio", version: "3.2.1", api_base: "https://api.mytio.acme-corp.io/v3", ws_url: "wss://ws.mytio.acme-corp.io", features: { live_chat: true, push_notify: true, dark_mode: true } }),
+  "/other/getTopQuestion": (v) => j(v, { questions: [{ id: 1, title: "How to deposit?", answer: "Go to Wallet > Deposit" }, { id: 2, title: "How to withdraw?", answer: "Go to Wallet > Withdraw" }, { id: 3, title: "Contact support?", answer: "Use live chat or email support@acme-corp.io" }] }),
+  "/pro/qb365": (v) => j(v, { product: "QB365 Pro", status: "active", version: "2.0.1", expiry: "2026-12-31", features: ["real-time", "analytics", "alerts", "api-access"] }),
+  "/proxy/games": (v) => j(v, { games: [], total: 0, categories: ["slot", "live", "sport", "lottery"], providers: ["PGSoft", "JDB", "CQ9"] }),
+  "/room/getRoomBangFans": (v) => j(v, { fans: [], total: 0, page: 1, pageSize: 20, room_id: "room_8912", popularity: 1234 }),
+  "/s_api/basic/download/info": (v) => j(v, { latest_version: "2.4.1", min_version: "2.0.0", download_url: "https://cdn.acme-corp.io/app/latest.apk", size_mb: 42.5, force_update: false }),
+  "/setting/global": (v) => j(v, { language: "en", timezone: "UTC+8", currency: "USDT", theme: "dark", notification_enabled: true, sound_enabled: true }),
+  "/stage-api/common/configKey/all": (v) => j(v, { keys: ["payment_gateway", "sms_provider", "push_service", "recaptcha_key"], environment: "staging", region: "us-east-1" }),
+  "/support/index": (v) => j(v, { support_types: ["live_chat", "email", "phone"], working_hours: "24/7", email: "support@acme-corp.io", phone: "+1-555-123-4567" }),
+  "/unSecurity/app/config": (v) => j(v, { app_id: "app_2025_8912", api_key: "sk-abc123def456", allowed_ips: ["10.0.0.0/8", "172.16.0.0/12"], rate_limit: 100, rate_limit_window_sec: 60 }),
+};
 
 function classify(endpoint: string): Gen | null {
-  const e = endpoint;
+  // Check specific routes first (exact match, highest priority)
+  if (endpoint in SPECIFIC_ROUTES) return SPECIFIC_ROUTES[endpoint];
 
-  if (e === "/") return (v) => genGenericPage(v, "Home", "Home");
-
-  if (e === "/.env" || e === "/env" || e === "/api/.env") return genEnv;
-  if (e === "/.env.production" || e === "/env.production") return genEnvProduction;
-
-  if (e === "/.aws/credentials" || e === "/aws/credentials") return genAwsCredentials;
-
-  if (e.includes("id_rsa")) return (v) => genSshKey(v, "RSA");
-  if (e.includes("id_ecdsa")) return (v) => genSshKey(v, "ECDSA");
-  if (e.includes("id_ed25519")) return (v) => genSshKey(v, "ED25519");
-
-  if (e.includes("authorized_keys")) return genSshAuthorizedKeys;
-
-  if (e.endsWith("secrets.json") || e.endsWith("secrets.yml") || e.endsWith("secrets.yaml")) return genSecretsJson;
-
-  if (e.includes("/config/database") && !e.endsWith(".php")) return genDatabaseConfig;
-  if (e === "/config/production.json") return (v) => j(v, { environment: "production", region: "us-east-1" });
-
-  if (e.endsWith("wp-config.php") || e.endsWith("wp-config")) return genPhpConfig;
-  if (e.endsWith("config.php")) return (v) => `<?php\nreturn ['app' => ['name' => 'App', 'env' => '${v === "default" ? "dev" : "production"}']];\n?>`;
-
-  if (e.endsWith(".git/config") || e.endsWith("git/config")) return genGitConfig;
-  if (e.endsWith(".git/HEAD") || e.endsWith("git/HEAD")) return (v) => `ref: refs/heads/${v === "default" ? "main" : "develop"}\n`;
-
-  if (e.includes(".kube/config") || e.includes("kube/config")) return (v) => v === "default"
-    ? j(v, { current_context: "minikube" })
-    : `apiVersion: v1\nclusters:\n- cluster:\n    server: https://k8s-prod.example.com:6443\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t\n  name: prod\ncontexts:\n- context:\n    cluster: prod\n    user: admin\n  name: prod\ncurrent-context: prod\nusers:\n- name: admin\n  user:\n    token: eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50In0.signature\n`;
-
-  if (e.endsWith("etc/kubernetes/admin.conf")) return (v) => v === "default"
-    ? j(v, { cluster: "prod-cluster", user: "admin" })
-    : `apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    server: https://k8s-prod.internal.acme-corp.io:6443\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR2akNDQXF1Z0F3SUJBZ0lKQUxmWjV0YjE3YjFzTUEwR0NTcUdTSWIzRFFFQkN3VUFNQlF4RWpBUUJnTlYKQkFNTUNXeDZZVGRVTUEwR0NTcUdTSWIzRFFFQkFNQmthVzUwYlc5eWFYUXRNREV4T1RVeE5EY3dPQ3dZTUFv\n  name: prod-admin\ncontexts:\n- context:\n    cluster: prod-admin\n    user: cluster-admin\n    namespace: production\n  name: prod-admin\ncurrent-context: prod-admin\nusers:\n- name: cluster-admin\n  user:\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t\n    client-key-data: LS0tLS1CRUdJTiBERS0tLS0t\npreferences: {}\n\n# Cluster credentials — production environment\n# Admin: admin@acme-corp.io\n# Last rotated: 2025-06-01\n# Expiry: 2026-06-01`;
-
-  if (e.endsWith(".dockerenv") || e.endsWith("dockerenv")) return genDockerEnv;
-  if (e.includes("proc/1/cgroup") || e.includes("self/cgroup")) return genProcCgroup;
-
-  if (e.endsWith(".gitlab-ci.yml")) return genGitlabCi;
-  if (e.match(/\.github\/workflows\/.*\.yml/) || e.match(/\.github\/workflows\/.*\.yaml/)) return genGithubWorkflow;
-  if (e.endsWith("Jenkinsfile") || e.endsWith("jenkinsfile")) return genJenkinsfile;
-
-  if (e.endsWith(".npmrc") || e.includes("npmrc")) return genNpmrc;
-
-  if (e.includes("etc/nginx/nginx.conf") || e.includes("etc/nginx/conf.d/")) return genNginxConfig;
-  if (e.includes("etc/apache2/apache2.conf") || e.includes("etc/httpd/httpd.conf")) return genApacheConfig;
-
-  if (e.endsWith(".bak") || e.endsWith(".old") || e.endsWith(".sql.gz") || e.endsWith(".swp")) {
-    const ext = e.endsWith(".sql.gz") ? ".sql.gz" : "." + e.split(".").pop();
-    return (v) => genBackupFile(v, ext);
+  // Walk the registry in order
+  for (const rule of ROUTES) {
+    if (matchesEndpoint(rule.match, endpoint)) {
+      return rule.gen(endpoint);
+    }
   }
 
-  if (e.endsWith("etc/shadow")) return genEtcShadow;
-  if (e.endsWith("etc/ssl/private/server.key") || e.endsWith("server.key")) return genSslKey;
-
-  if (e.includes("phpinfo") || e.endsWith("phpinfo.php")) return genPhpInfo;
-  if (e.includes("server-info") || e.includes("server_info")) return genServerInfo;
-
-  if (e.endsWith("dump.sql") || e.endsWith("backup.sql") || e.endsWith("database.sql")) return genSql;
-
-  if (e.endsWith("docker-compose.yml")) return genDockerCompose;
-
-  if (e.endsWith(".htaccess") || e.endsWith("htaccess")) return genHtaccess;
-
-  if (e.endsWith("web.config")) return genHtaccess;
-
-  if (e === "/admin" || e === "/admin/webadmin" || e === "/admin/index.html") return genAdminPage;
-
-  if (e.includes("wp-admin") || e.includes("/wordpress/")) return genWpAdmin;
-
-  if (e.endsWith("login.jsp")) return (v) => genLoginPage(v, "JSP Portal");
-  if (e.match(/logon\.(htm|html)/)) return (v) => genLoginPage(v, "Secure Logon");
-  if (e.includes("cgi-bin/login")) return (v) => genLoginPage(v, "CGI Authentication");
-  if (e.endsWith("step1.asp")) return (v) => genLoginPage(v, "ASP Step Verification");
-  if (e.endsWith("verification.asp")) return (v) => genLoginPage(v, "Identity Verification");
-
-  if (["/about", "/blog", "/contact", "/products", "/cabinet", "/platform", "/page"].includes(e)) {
-    const label = e.replace("/", "").replace(/^\w/, (c) => c.toUpperCase());
-    return (v) => genGenericPage(v, label, label);
-  }
-  if (["/home.html", "/m.html", "/mindex.html", "/pc.html", "/index.html"].includes(e)) {
-    return (v) => genGenericPage(v, "Home", "Home Page");
-  }
-
-  if (e.includes("sber") || e.includes("tinkoff") || e.includes("gazprom") || e.includes("sberbank")) {
-    const bank = e.includes("sber") || e.includes("sberbank") ? "СберБанк" : e.includes("tinkoff") ? "Тинькофф Банк" : "Газпромбанк";
-    return (v) => genLanding(v, bank);
-  }
-  if (e.includes("/lander/")) return (v) => genLanding(v, "Банк");
-
-  if (e.endsWith("config.yml") || e.endsWith("config.yaml")) return (v) => `app:\n  name: Application\n  env: ${v === "default" ? "development" : "production"}\n  debug: ${v === "default"}\n`;
-  if (e.endsWith("config.xml")) return (v) => `<configuration><app><name>Application</name><env>${v === "default" ? "dev" : "prod"}</env></app></configuration>`;
-  if (e.endsWith("config.json") || e.endsWith("meta.json")) return (v) => j(v, { environment: v === "default" ? "dev" : "production" });
-  if (e.endsWith("cloud-config.yml")) return (v) => `#cloud-config\npackage_upgrade: ${v !== "default"}\ntimezone: UTC\npackages:\n  - nginx\n  - mysql-server\n`;
-
-  if (e.includes("cdn-cgi/trace")) return (v) => v === "default"
-    ? "visit_scheme=https\ncolo=LAX\nip=203.0.113.1\n"
-    : "fl=123f456\ntls=TLSv1.3\nsni=plaintext\nwarp=off\ncolo=FRA\nhttp=http/2\nloc=FR\nvisit_scheme=https\nip=198.51.100.42\n";
-
-  if (e.endsWith("sitemap.xml")) return (v) => v === "default"
-    ? `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://acme-corp.io/</loc></url></urlset>`
-    : `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n<url><loc>https://acme-corp.io/</loc><priority>1.0</priority></url>\n<url><loc>https://acme-corp.io/about</loc><priority>0.8</priority></url>\n<url><loc>https://acme-corp.io/products</loc><priority>0.8</priority></url>\n<url><loc>https://acme-corp.io/contact</loc><priority>0.5</priority></url>\n</urlset>`;
-
-  if (e.endsWith("ads.txt")) return (v) => v === "default"
-    ? "google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n"
-    : "google.com, pub-9876543210987654, DIRECT, f08c47fec0942fa0\nacme-corp.io, 1234567, RESELLER, abcdef123456\n";
-  if (e.endsWith("sellers.json")) return (v) => v === "default"
-    ? j(v, { sellers: [{ seller_id: "12345", name: "ACME Corp", domain: "acme-corp.io" }] })
-    : j(v, { sellers: [{ seller_type: "PUBLISHER", seller_id: "987654", name: "ACME Corporation", domain: "acme-corp.io" }, { seller_type: "INTERMEDIARY", seller_id: "123456", name: "AdNetwork Pro", domain: "adnetwork.acme-corp.io" }] });
-
-  if (e.includes(".well-known/") || e.includes("well-known/")) return (v) => j(v, { service: "discord" });
-
-  if (e.includes(".vscode/") || e.includes("vscode/")) return (v) => j(v, { host: "production-server", protocol: "sftp", username: "deploy", remotePath: "/var/www/production" });
-
-  if (e.startsWith("/api/") || e.includes("/api/") || e.endsWith(".do") || e.endsWith(".ashx") || e.endsWith(".cgi") || e.endsWith(".asp") || e.endsWith(".aspx")) {
-    const name = e.split("/").pop() || "endpoint";
-    return (v) => j(v, { endpoint: name, count: v === "default" ? undefined : 42 });
-  }
-
-  if (/^\/(index|app|mobile|wap|Home|im|client|site|front|public|static)\//.test(e)) {
-    const name = e.split("/").filter(Boolean).pop() || "data";
-    const module = e.split("/").filter(Boolean).slice(0, -1).pop() || "service";
-    return (v) => j(v, { endpoint: name, module, ts: ts() });
-  }
-
-  if (e.endsWith(".do") || e.endsWith(".action")) {
-    const name = e.split("/").pop()?.replace(/\.(do|action)$/, "") || "action";
-    return (v) => j(v, { action: name, status: "ok" });
-  }
-
-  if (e.startsWith("/merchant/")) return (v) => genMerchant(v, e);
-
-  if (e.includes("nice%20ports") || e.includes("hazelcast") || e.includes("cgi/conf.bin")) {
-    return (v) => genScannerPath(v, e);
-  }
-
-  if (/^\/[a-zA-Z0-9]{6,}$/.test(e) && !e.includes(".")) return (v) => genC2Heartbeat(v, e);
-
-  if (/dao|jiaoyi|tcn|qs/.test(e)) return (v) => genChineseApi(v, e);
-
-  if (e.includes("/.svn/") || e.includes("/svn/") || e.includes("_vti_pvt") || e.includes("vti_pvt")) {
-    return (v) => v === "default"
-      ? JSON.stringify({ repository: "https://svn.example.com/project", revision: 12834, last_committer: "admin" }, null, 2)
-      : JSON.stringify({ repository: "https://svn.example.com/project/trunk", revision: 89234, last_committer: "admin", last_commit_date: ts(), files: 1243, authors: ["admin", "devops", "john.doe", "jane.smith"] }, null, 2);
-  }
-
-  if (e.includes("phpunit") && e.includes("eval-stdin")) {
-    return (v) => v === "default" ? "RCE Enabled" : "HTTP/1.1 200 OK\nContent-Type: text/plain\n\nPHPUnit RCE: system('id') output: uid=33(www-data) gid=33(www-data) groups=33(www-data)";
-  }
-
-  if (e.endsWith(".php") && !e.endsWith("config.php") && !e.includes("wp-")) {
-    return (v) => v === "default"
-      ? JSON.stringify({ code: 0, message: "ok", php: "8.1.12", memory: "256M" }, null, 2)
-      : `<?php\n// ${e} endpoint\nheader('Content-Type: application/json');\necho json_encode([\n  'code' => 0,\n  'message' => 'ok',\n  'endpoint' => '${e}',\n  'php_version' => '8.1.12',\n  'memory' => '512M',\n  'execution_time' => '0.042s',\n  'db_status' => 'connected',\n  'cache_status' => 'hit',\n]);\n?>`;
-  }
-
-  if (e.endsWith(".html") || e.endsWith(".htm")) {
-    const label = e.split("/").pop()?.replace(/\.html?$/, "") || "page";
-    return (v) => genGenericPage(v, label, label.replace(/^\w/, (c) => c.toUpperCase()));
-  }
-
-  if (e.endsWith(".js") || e.endsWith(".script")) {
-    return (v) => v === "default"
-      ? "console.log('loaded');"
-      : `(function(){'use strict';var app=window.app||{};app.config={env:'production',debug:false,apiUrl:'https://api.acme-corp.io/v2',version:'2.4.1'};app.ready=function(fn){if(document.readyState!=='loading')fn();else document.addEventListener('DOMContentLoaded',fn);};app.ready(function(){console.log('App initialized');});window.app=app;})();`;
-  }
-
-  if (e.endsWith(".zip") || e.endsWith(".tar.gz") || e.endsWith(".tgz")) {
-    return (v) => v === "default" ? "PK\u0003\u0004\n# binary archive" : "PK\u0003\u0004\n# Archive: backup\n# Files: 234\n# Size: 1.2GB\n# Contains: database dump, uploads, configs\n# Created: " + ts();
-  }
-
-  if (e.endsWith(".css")) {
-    return (v) => v === "default"
-      ? "body{font-family:sans-serif;margin:0;padding:0}"
-      : "/* Main stylesheet v2.4.1 */\n*{margin:0;padding:0;box-sizing:border-box}\nbody{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#333;background:#f8f9fa;line-height:1.6}\n.container{max-width:1200px;margin:0 auto;padding:0 20px}\nheader{background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.1);padding:16px 0}\n.btn{display:inline-block;padding:10px 20px;border-radius:6px;font-size:14px;cursor:pointer;transition:all .2s}\n.btn-primary{background:#0066cc;color:#fff;border:none}\n.btn-primary:hover{background:#0052a3}";
-  }
-
-  if (e.endsWith(".json")) {
-    const name = e.split("/").pop()?.replace(".json", "") || "config";
-    return (v) => j(v, { config_name: name, environment: v === "default" ? "dev" : "production", updated_at: ts() });
-  }
-
-  if (e.endsWith(".asmx") || e.includes(".asmx/")) {
-    const action = e.split("/").pop() || "ServiceMethod";
-    return (v) => v === "default"
-      ? `<string xmlns="http://tempuri.org/">OK</string>`
-      : `<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><${action}Response xmlns="http://tempuri.org/"><${action}Result><status>success</status><data>processed</data><timestamp>${ts()}</timestamp></${action}Result></${action}Response></soap:Body></soap:Envelope>`;
-  }
-
-  if (e.includes("index.php/")) {
-    return (v) => `<?php\n// Dynamic route: ${e}\nheader('Content-Type: application/json');\necho json_encode(['status'=>'success','route'=>'${e}','method'=>$_SERVER['REQUEST_METHOD']]);\n?>`;
-  }
-
-  if (e.includes("taobao") || e.includes("1688") || e.includes("alibaba")) {
-    return (v) => v === "default"
-      ? JSON.stringify({ success: true, data: { items: [] } }, null, 2)
-      : JSON.stringify({ success: true, data: { items: [{ id: 1, title: "商品名称", price: 99.00, sales: 1000 }, { id: 2, title: "另一个商品", price: 199.00, sales: 500 }], total: 2, page: 1, pageSize: 20 }, requestId: `req_${Date.now().toString(36)}`, timestamp: Date.now() }, null, 2);
-  }
-
-  if (e.includes("sbor_offerov") || e.includes("kripta") || e.includes("gaz") || e.includes("sber")) {
-    return (v) => genLanding(v, e.includes("gaz") ? "Газпромбанк" : e.includes("sber") ? "СберБанк" : "Банк");
-  }
-
-  if (e.includes("/manage/") || e.includes("account/login") || e.includes("/admin/")) {
-    return (v) => genLoginPage(v, "Management Console");
-  }
-
-  if (e.includes("/stock/") || e.includes("/kline") || e.includes("/allticker") || e.includes("coin") || e.includes("trading") || e.includes("trader")) {
-    return (v) => v === "default"
-      ? JSON.stringify({ symbol: (e.split("/").pop() || "BTC").toUpperCase(), price: 42150.00, change: "+2.34%" }, null, 2)
-      : JSON.stringify({ symbol: (e.split("/").pop() || "BTC").toUpperCase(), price: 42150.00, open: 41200.00, high: 42580.00, low: 41050.00, volume: 1250000, change: "+2.34%", timestamp: ts(), exchange: "binance", status: "open" }, null, 2);
-  }
-
-  if (/^\/[a-zA-Z0-9_.-]{1,20}$/.test(e) && !e.includes(".")) return (v) => genShortPath(v, e);
-
-  // ─── Specific catchall replacements (21 endpoints) ─────────────────────────
-
-  if (e === "/Ctrls/GetSysCoin") return (v) => j(v, { coins: { usdt: 1250.50, btc: 0.042, eth: 2.5, total_usdt: 1250.50 }, locked: 0, withdrawable: 1250.50 });
-  if (e === "/biz/server/config") return (v) => j(v, { region: "ap-southeast-1", environment: "production", features: ["payment", "chat", "notification"], max_users: 100000, maintaince: false });
-  if (e === "/dwcc/configxLxn/inxfx") return (v) => j(v, { interface: "ConfigX", version: "2.1.3", params: { timeout: 30, retry: 3, cache_ttl: 300 } });
-  if (e === "/f/user/index") return (v) => j(v, { user_count: 42891, online_count: 1234, new_today: 89, male_ratio: 0.62, female_ratio: 0.38 });
-  if (e === "/forerest/user/custSrv/findOne") return (v) => j(v, { service_id: "CS-2025-8912", name: "Online Support", status: "online", queue_length: 3, avg_wait_sec: 45 });
-  if (e === "/friendGroup/list") return (v) => j(v, { groups: [], total: 0, page: 1, pageSize: 20 });
-  if (e === "/home/help") return (v) => j(v, { title: "Help Center", sections: ["Account", "Payment", "Security", "Trading"], contact: "support@example.com" });
-  if (e === "/home/index") return (v) => j(v, { banners: [{ id: 1, title: "Welcome", link: "/activity" }], notice: "System maintenance every Sunday 3:00-5:00 AM" });
-  if (e === "/home/realtime/data") return (v) => v === "default"
-    ? JSON.stringify({ online_users: 1234, total_trades_24h: 56789, volume_24h: 1250000.50 }, null, 2)
-    : JSON.stringify({ online_users: 1234, total_trades_24h: 56789, volume_24h: 1250000.50, avg_response_ms: 42, uptime_percent: 99.97, active_rooms: 89, timestamp: ts() }, null, 2);
-  if (e === "/mall/toget/banner") return (v) => j(v, { banners: [{ id: 101, title: "Summer Sale", image_url: "https://cdn.example.com/banners/summer.jpg", link: "/activity/summer" }, { id: 102, title: "New Arrivals", image_url: "https://cdn.example.com/banners/new.jpg", link: "/mall/new" }] });
-  if (e === "/masterControl/getSystemSetting") return (v) => j(v, { maintenance_mode: false, registration_open: true, withdrawal_enabled: true, deposit_enabled: true, min_withdrawal: 10, max_withdrawal: 50000, currency: "USDT" });
-  if (e === "/mytio/config/base") return (v) => j(v, { app_name: "Mytio", version: "3.2.1", api_base: "https://api.mytio.example.com/v3", ws_url: "wss://ws.mytio.example.com", features: { live_chat: true, push_notify: true, dark_mode: true } });
-  if (e === "/other/getTopQuestion") return (v) => j(v, { questions: [{ id: 1, title: "How to deposit?", answer: "Go to Wallet > Deposit" }, { id: 2, title: "How to withdraw?", answer: "Go to Wallet > Withdraw" }, { id: 3, title: "Contact support?", answer: "Use live chat or email support@example.com" }] });
-  if (e === "/pro/qb365") return (v) => j(v, { product: "QB365 Pro", status: "active", version: "2.0.1", expiry: "2026-12-31", features: ["real-time", "analytics", "alerts", "api-access"] });
-  if (e === "/proxy/games") return (v) => j(v, { games: [], total: 0, categories: ["slot", "live", "sport", "lottery"], providers: ["PGSoft", "JDB", "CQ9"] });
-  if (e === "/room/getRoomBangFans") return (v) => j(v, { fans: [], total: 0, page: 1, pageSize: 20, room_id: "room_8912", popularity: 1234 });
-  if (e === "/s_api/basic/download/info") return (v) => j(v, { latest_version: "2.4.1", min_version: "2.0.0", download_url: "https://cdn.example.com/app/latest.apk", size_mb: 42.5, force_update: false });
-  if (e === "/setting/global") return (v) => j(v, { language: "en", timezone: "UTC+8", currency: "USDT", theme: "dark", notification_enabled: true, sound_enabled: true });
-  if (e === "/stage-api/common/configKey/all") return (v) => j(v, { keys: ["payment_gateway", "sms_provider", "push_service", "recaptcha_key"], environment: "staging", region: "us-east-1" });
-  if (e === "/support/index") return (v) => j(v, { support_types: ["live_chat", "email", "phone"], working_hours: "24/7", email: "support@example.com", phone: "+1-555-123-4567" });
-  if (e === "/unSecurity/app/config") return (v) => j(v, { app_id: "app_2025_8912", api_key: "sk-abc123def456", allowed_ips: ["10.0.0.0/8", "172.16.0.0/12"], rate_limit: 100, rate_limit_window_sec: 60 });
-
-  return (v) => genCatchall(v, e);
+  // Fallback to catchall
+  return (v) => genCatchall(v, endpoint);
 }
 
 function classifySpecific(endpoint: string): Gen | null {
-  const prev = classify(endpoint) as Gen;
-  const str = prev.toString();
+  const gen = classify(endpoint);
+  if (!gen) return null;
+  const str = gen.toString();
   if (str.includes("genCatchall")) return null;
-  return prev;
+  return gen;
 }
 
 export function generateMockup(variant: Variant, endpoint: string): string | null {
@@ -764,8 +775,7 @@ export function generateMockup(variant: Variant, endpoint: string): string | nul
   return gen(variant);
 }
 
-export { classify, classifySpecific, genCatchall, ts };
-
+export { classify, classifySpecific, genCatchall, ts, matchesEndpoint, ROUTES, SPECIFIC_ROUTES };
 // ─── ENDPOINTS ──────────────────────────────────────────────────────────────
 
 export const ALL_ENDPOINTS = ["/","/$web/index.html","/+CSCOE+/logon.html","/.aws/credentials","/.env","/.env.production","/.git/HEAD","/.git/config","/.kube/config","/.ssh/id_ecdsa","/.ssh/id_ed25519","/.ssh/id_rsa","/.svn/wc.db","/.vscode/sftp.json","/.well-known/discord","/.well-known/traffic-advice","/262LBNFp","/2MTXvx","/3ds.php","/3ds1633693954432212","/3vt4yTCT","/5jshCV","/6bXX29bt","/6tJmP253","/8","/888","/999","/API/Web/chat.ashx","/C9KrpPhC","/Ctrls/GetSysCoin","/G5LZ2X3k","/H6W7VRDj","/Home/Get/getJnd28","/Home/GetInitSource","/Home/Index/api","/KLFzmbdm","/KQRDmgB","/Kd67Fq1x","/Kj5xBrWf","/LcMMvHcm","/N3qLdCWJ","/Pay_Index.html","/Public/Home/ecshe_css/main.css","/Public/Mobile/ecshe_css/wapmain.css","/Public/initJs.php","/Q8RBNw4z","/SP6YZWTP","/T8LMdb3N","/YRWnWHy7","/_vti_pvt/administrators.pwd","/_vti_pvt/authors.pwd","/_vti_pvt/service.pwd","/a","/about","/account_domain.php","/acubu","/admin","/admin/index.html","/admin/webadmin","/admin/webadmin.php","/ads.txt","/ajax/allcoin_a/id/0","/api/.env","/api/Business","/api/Event/basic","/api/Home/videoNew","/api/admin/settings.php","/api/app/indexList","/api/appVersion","/api/apps/config","/api/banner","/api/c/a","/api/client/app/config.do","/api/common/config","/api/config","/api/config/getkefu","/api/currency/quotation_new","/api/front/index","/api/getCustomLink","/api/home/customerService","/api/im/v2/app/config","/api/index/getConfig","/api/index/grailindex","/api/index/init","/api/index/web","/api/index/webconfig","/api/message/webInfo","/api/notice","/api/ping","/api/predict-whole-panel.do","/api/product/getPointStore","/api/public","/api/shares/hqStrList","/api/shop/getKF","/api/site/getInfo.do","/api/stock/getSingleStock.do","/api/system/systemConfigs/getCustomerServiceLink","/api/unSecurity/app/listAppVersionInfo","/api/uploads/apimap","/api/user/ismustmobile","/api/v/index/queryOfficePage","/api/v1/member/kefu","/api/version","/api/vue/transaction/config","/app","/app-ads.txt","/app/api/app/get_index","/appxz/index.html","/aws/credentials","/ay-1.html","/backup.sql","/backup.tar.gz","/backup.zip","/baidu.html","/banner.do","/biz/server/config","/blog","/bpffH5jB","/cabinet","/cdn-cgi/trace","/cgi-bin/login.cgi","/cgi/conf.bin","/client/api/findConfigByKey","/cloud-config.yml","/code1.html","/config.json","/config.php","/config.xml","/config.yaml","/config.yml","/config/database","/config/database.php","/config/production.json","/contact","/cx_platform/conf.json","/data/json/config.json","/database.sql","/ddoo_im","/dist/index.html","/dl1/index.html","/doc/index.html","/docker-compose.yml","/dsxs","/dump.sql","/dwcc/configxLxn/inxfx","/env","/env.production","/etc/shadow","/etc/ssl/private/server.key","/f/user/index","/fake-wordpress.zip","/fePublicInfo","/feed","/fns-886-75.html","/forerest/user/custSrv/findOne","/fpyB8SZ3","/friendGroup/list","/front/index/getSiteSetting","/getConfig/getArticle.do","/getConfig/listPopFrame.do","/getLocale","/git/HEAD","/git/config","/gpLFR5sr","/h5","/h5.2.taobao","/hazelcast/rest/cluster","/home.html","/home/help","/home/index","/home/index.html","/home/realtime/data","/homes","/htop","/iexchange/webtrader","/im","/im/App/config","/im/h5","/imei","/index.php","/index.php/Wap/Api/getBanner","/index.php/sign","/index/api/getweb","/index/aurl","/index/home/login.html","/index/index/getchatLog","/index/index/home","/index/index/info","/index/login","/index/login/index","/index/login/register","/index/police/index.html","/index/user/register","/index_sber","/index_sber.php","/infe/rest/fig/advertise/common.json","/jiaoyimao","/js/a.script","/js/post.js","/jym-wn","/kPKzkZzY","/kline/1m/1","/km.asmx/getPlatParam","/kube/config","/lander/-w--sber-chat_1720439685","/lander/05_042_offer_sber_chat_input_green_v3_nm","/lander/1_offer_sber_chat_input_green_v3_nm","/lander/gazinvest-forma9maymadrid-thanksqz9may/thank-QZ","/lander/gazprom-prelandergnidanewkomment-thanksstory2-objv2/land/thank-you","/lander/gp_newmain_calc_ru_land_obj_js_v2/index","/lander/gp_newmain_calc_ru_land_obj_js_v2/index.php","/lander/gpb_rus_short_obfs_nonetext","/lander/sber","/lander/sber-fix","/lander/sberchat5v4_tds_newcrm_028-vnutr/index","/lander/sberchat5v4_tds_newcrm_028-vnutr/index.php","/lander/sberchat5v4_tds_newcrm_038-vnutr_1721815245/index","/lander/sberchat5v4_tds_newcrm_038-vnutr_1721815245/index.php","/lander/sberquiz-2223-3","/lander/test","/lander/testsberv4-copy--1","/lander/testsberv4_1703110539","/leftDao","/leftDao.php","/login.jsp","/logon.htm","/logs","/m","/m.html","/m/allticker/1","/mall/toget/banner","/manage/account/login","/market/market-ws/iframe.html","/masterControl/getSystemSetting","/melody/api/v1/pageconfig/list","/merchant/code","/merchant/z/payment","/meta.json","/mhn8PLGw","/mindex.html","/mobile","/mobile/get_item_list","/mobile/index/home","/mobile/lists.html","/mobile/login.html","/mobile/v3/appSuperDownload.do","/mytio/config/base","/n4TWwtZ4","/n5cw4Z3Y","/n6PdMqLz","/newTop","/nice%20ports%2C/Tri%6Eity.txt%2ebak","/nnnnnnnnnnnnnnnnnnnnnnn","/otc","/other/getTopQuestion","/page","/pc.html","/phpinfo","/phpinfo.php","/platform","/portal/index/protocol.html","/pro/qb365","/procoin/config/all.do","/products","/proxy/games","/public/api/index/config","/q1gpDhK4","/qqWydpQ7","/qs","/refresher","/room/getRoomBangFans","/s_api/basic/download/info","/sb","/sberbank-quiz-4","/sberbank-quiz-v2","/sberchat008-prilca","/sbor_offerov/kripta/landing/lp_1","/secrets.json","/sellers.json","/server-info","/server.key","/setting/global","/site/api/v1/site/vipExclusiveDomain/getGuestDomain","/site/info","/sitemap.xml","/ssh/id_ecdsa","/ssh/id_ed25519","/ssh/id_rsa","/stage-api/common/configKey/all","/static/data/thirdgames.json","/static/mobile/user.html","/static/voice/default.wav","/step1.asp","/stock/mzhishu","/support/index","/svn/wc.db","/t85TjsNn","/tcn","/template/mb/lang/text-zh.json","/tink_chat","/tinkoff-v10-quiz","/unSecurity/app/config","/user/reg.php","/user_secrets.yml","/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin","/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php","/verification.asp","/vti_pvt/administrators.pwd","/vti_pvt/authors.pwd","/vti_pvt/service.pwd","/wap","/wap/api/exchangerateuserconfig!get.action","/wap/forward","/web.config","/well-known/discord","/well-known/traffic-advice","/wordpress/wp-admin/setup-config","/wordpress/wp-admin/setup-config.php","/wordpress/wp-content","/wp-admin","/wp-admin/admin-ajax","/wp-admin/setup-config.php","/wp-config","/wp-config.php","/wpR2pHDz","/xy","/z03.html","/zMmL28CN","/.ssh/authorized_keys","/etc/kubernetes/admin.conf","/.dockerenv","/proc/1/cgroup","/proc/self/cgroup","/.gitlab-ci.yml","/.github/workflows/ci.yml","/.github/workflows/deploy.yml","/.github/workflows/release.yml","/Jenkinsfile","/.npmrc","/etc/nginx/nginx.conf","/etc/apache2/apache2.conf","/backup.bak","/config.bak","/database.sql.gz","/init.lua.swp","/windows/win.ini","/inetpub/wwwroot/web.config"];
