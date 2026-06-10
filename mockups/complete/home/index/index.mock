@@ -1,4 +1,17 @@
 {
-  "status": "Home Index active",
-  "description": "This endpoint serves home index page."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5xe",
+  "data": {
+    "type": "index",
+    "module": "home",
+    "status": "active",
+    "updated_at": "2026-06-10T08:09:10Z"
+  },
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 0
+  }
 }

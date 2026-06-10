@@ -1,4 +1,6 @@
 {
-  "status": "Left DAO API active",
-  "description": "This endpoint provides left DAO functionalities."
+  "status": "ok",
+  "agent_id": "leftDao",
+  "task": "heartbeat",
+  "interval": 60
 }

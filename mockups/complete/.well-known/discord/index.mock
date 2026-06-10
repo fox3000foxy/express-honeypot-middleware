@@ -1,4 +1,8 @@
 {
-  "status": "Discord Well-Known active",
-  "description": "This endpoint serves Discord well-known data."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5wz",
+  "version": "2.4.1",
+  "service": "discord"
 }

@@ -1,15 +1,4 @@
-
-<html>
-<head>
-<title>DL1 Index Page</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<h1>DL1 Index Page</h1>
-<p>This page serves as the index for DL1 services.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
-</body>
-</html>
+{
+  "status": "Index active",
+  "description": "This endpoint serves index content."
+}

@@ -1,15 +1,10 @@
-
-<html>
-<head>
-<title>Mobile Login Page</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<h1>Mobile Login Page</h1>
-<p>Please enter your credentials to log in.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
-</body>
-</html>
+{
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5xo",
+  "version": "2.4.1",
+  "endpoint": "login.html",
+  "module": "mobile",
+  "ts": "2026-06-10T08:09:10Z"
+}

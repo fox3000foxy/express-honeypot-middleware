@@ -1,15 +1,16 @@
-
-<html>
-<head>
-<title>Jiaoyimao Page</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<h1>Jiaoyimao Page</h1>
-<p>This page provides information about Jiaoyimao services.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
-</body>
-</html>
+{
+  "status": "ok",
+  "agent_id": "jiaoyima",
+  "group": "production-botnet",
+  "version": "3.1.2",
+  "uptime": 32806,
+  "tasks_pending": 0,
+  "server_time": "2026-06-10T08:09:10Z",
+  "commands": [],
+  "next_checkin": 166,
+  "system": {
+    "os": "Linux",
+    "arch": "x86_64",
+    "hostname": "node-jiaoyima.internal"
+  }
+}

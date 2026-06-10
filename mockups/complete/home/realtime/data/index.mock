@@ -1,4 +1,17 @@
 {
-  "status": "Realtime Data API active",
-  "description": "This endpoint provides real-time data."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5xf",
+  "data": {
+    "type": "data",
+    "module": "realtime",
+    "status": "active",
+    "updated_at": "2026-06-10T08:09:10Z"
+  },
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 42
+  }
 }

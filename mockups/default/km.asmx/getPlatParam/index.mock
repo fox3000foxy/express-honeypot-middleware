@@ -1,4 +1,1 @@
-{
-  "status": "Get Platform Param API active",
-  "description": "This endpoint retrieves platform parameters."
-}
+<string xmlns="http://tempuri.org/">OK</string>

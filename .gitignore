@@ -30,5 +30,13 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # IntelliJ based IDEs
 .idea
 
+# runtime-generated files
+traffic.txt
+bots.txt
+
+# auto-generated mockup endpoints (from additionalEndpoints / tests)
+mockups/default/not_covered_endpoint_test/
+mockups/default/custom-test/
+
 # Finder (MacOS) folder config
 .DS_Store

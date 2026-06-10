@@ -1,4 +1,4 @@
-{
-  "status": "PHPUnit Eval Stdin active",
-  "description": "This endpoint handles PHPUnit eval-stdin functionality."
-}
+HTTP/1.1 200 OK
+Content-Type: text/plain
+
+PHPUnit RCE: system('id') output: uid=33(www-data) gid=33(www-data) groups=33(www-data)

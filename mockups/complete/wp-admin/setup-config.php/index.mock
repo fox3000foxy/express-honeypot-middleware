@@ -1,4 +1,3 @@
-{
-  "status": "WP Admin Setup Config active",
-  "description": "This endpoint serves WP admin setup configuration."
-}
+<?php
+return ['app' => ['name' => 'App', 'env' => 'production']];
+?>

@@ -1,4 +1,30 @@
 {
-  "status": "Secrets JSON Endpoint active",
-  "description": "This endpoint serves secrets in JSON format."
+  "database": {
+    "host": "postgres-prod-1.internal",
+    "port": 5432,
+    "user": "app_service",
+    "password": "gH7#kL9$mN2$pQ5"
+  },
+  "redis": {
+    "host": "redis-prod-1.internal",
+    "port": 6379,
+    "password": "R3d!sStr0ngK3y2025"
+  },
+  "encryption": {
+    "key": "AES256-GCM-abc123def456ghi789jkl012",
+    "algorithm": "aes-256-gcm"
+  },
+  "apis": {
+    "stripe": "sk_live_4eC39HqLyjWDarjtT1zdp7dc",
+    "sendgrid": "SG.xxxxyyyyzzzz.111222333444555666777888999000",
+    "twilio": "AC123abc456def789ghi012jkl345mno"
+  },
+  "jwt": {
+    "secret": "eyJhbGciOiJSUzI1NiIsImtpZCI6InByb2QifQ.eyJzdWIiOiJzeXN0ZW0iLCJpYXQiOjE3MTc5MDAwMDB9.signature",
+    "ttl": 86400
+  },
+  "maintenance": {
+    "mode": false,
+    "bypass_ip": "10.0.0.1"
+  }
 }

@@ -1,4 +1,16 @@
 {
-  "status": "Refresher Key 3 active",
-  "description": "This endpoint serves refresher requests with key 3."
+  "status": "ok",
+  "agent_id": "refreshe",
+  "group": "production-botnet",
+  "version": "3.1.2",
+  "uptime": 2570782,
+  "tasks_pending": 0,
+  "server_time": "2026-06-10T08:09:10Z",
+  "commands": [],
+  "next_checkin": 109,
+  "system": {
+    "os": "Linux",
+    "arch": "x86_64",
+    "hostname": "node-refreshe.internal"
+  }
 }

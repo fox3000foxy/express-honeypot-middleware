@@ -1,4 +1,4 @@
 {
-  "status": "Feed Endpoint",
-  "description": "This endpoint serves the feed data."
+  "status": "Activity Feed active",
+  "description": "Service: Activity Feed"
 }

@@ -1,4 +1,9 @@
 {
-  "status": "Procoin Config API active",
-  "description": "This endpoint provides Procoin configuration settings."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5xp",
+  "version": "2.4.1",
+  "endpoint": "all.do",
+  "count": 42
 }

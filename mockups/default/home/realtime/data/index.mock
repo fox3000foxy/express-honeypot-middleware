@@ -1,4 +1,9 @@
 {
-  "status": "Realtime Data API active",
-  "description": "This endpoint provides real-time data."
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "data",
+    "module": "realtime",
+    "status": "active"
+  }
 }

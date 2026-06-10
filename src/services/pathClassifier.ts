@@ -27,7 +27,11 @@ export class PathClassifier {
 
     return {
       isKnown,
-      type: normalizedPath.startsWith("/api/") ? "api" : "page",
+      type: isKnown
+        ? normalizedPath.startsWith("/api/") || options.knownApiPaths.includes(normalizedPath)
+          ? "api"
+          : "page"
+        : "unknown",
     };
   }
 }

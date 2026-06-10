@@ -1,4 +1,7 @@
-{
-  "status": "Sitemap active",
-  "description": "This endpoint serves sitemap."
-}
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url><loc>https://example.com/</loc><priority>1.0</priority></url>
+<url><loc>https://example.com/about</loc><priority>0.8</priority></url>
+<url><loc>https://example.com/products</loc><priority>0.8</priority></url>
+<url><loc>https://example.com/contact</loc><priority>0.5</priority></url>
+</urlset>

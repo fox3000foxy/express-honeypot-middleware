@@ -1,0 +1,11 @@
+{
+  "code": 0,
+  "message": "ok",
+  "sellers": [
+    {
+      "seller_id": "12345",
+      "name": "Example Corp",
+      "domain": "example.com"
+    }
+  ]
+}

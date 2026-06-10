@@ -1,4 +1,17 @@
 {
-  "status": "MyTio Base Config API active",
-  "description": "This endpoint provides MyTio base configuration."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5xo",
+  "data": {
+    "type": "base",
+    "module": "config",
+    "status": "active",
+    "updated_at": "2026-06-10T08:09:10Z"
+  },
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 42
+  }
 }

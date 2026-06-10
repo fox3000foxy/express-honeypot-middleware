@@ -1,15 +1,11 @@
-
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>Page 8</title>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Status</title>
 </head>
 <body>
-<h1>Page 8</h1>
-<p>This page provides information about page 8.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
+<h1>Status Page</h1><main><p>Service endpoint active. Last checked: 2026-06-10T08:09:10Z</p><p>Status: operational</p></main>
 </body>
 </html>

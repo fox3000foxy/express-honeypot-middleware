@@ -1,15 +1,11 @@
-
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>Web Index Page</title>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>index</title>
 </head>
 <body>
-<h1>Web Index Page</h1>
-<p>This page serves as the index for web services.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
+<header><h1>Index</h1></header><main><p>Welcome to ACME Corporation. We are a leading provider of innovative solutions for businesses worldwide.</p><p>For more information, contact us at info@example.com or call +1 (555) 123-4567.</p></main><footer>&copy; 2025 ACME Corporation</footer>
 </body>
 </html>

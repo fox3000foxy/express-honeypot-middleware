@@ -1,0 +1,5 @@
+{
+  "status": "Landing page active",
+  "bank": "Газпромбанк",
+  "redirect_url": "https://газпромбанк.example.com/auth"
+}

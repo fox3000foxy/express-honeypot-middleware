@@ -1,4 +1,4 @@
 {
-  "status": "Htop API active",
-  "description": "This endpoint provides Htop functionalities."
+  "status": "Server Monitor active",
+  "description": "Service: Server Monitor"
 }

@@ -1,4 +1,5 @@
 {
-  "status": "VTI Private Administrators Password",
-  "description": "This endpoint provides the VTI private administrators password."
+  "repository": "https://svn.example.com/project",
+  "revision": 12834,
+  "last_committer": "admin"
 }

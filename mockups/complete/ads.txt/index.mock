@@ -1,4 +1,2 @@
-{
-  "status": "Ads Text File",
-  "description": "This endpoint serves the ads text file."
-}
+google.com, pub-9876543210987654, DIRECT, f08c47fec0942fa0
+example.com, 1234567, RESELLER, abcdef123456

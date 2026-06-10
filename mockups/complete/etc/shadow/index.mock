@@ -1,4 +1,8 @@
-{
-  "status": "Shadow Password File",
-  "description": "This endpoint serves the shadow password file."
-}
+root:$y$j9T$6xL8pR2mN5vB7cQ9wE1yH3kT4nA6dF8gJ0sD2fG1hJ3kL5zX9cV7bN5m:19712:0:99999:7:::
+daemon:*:19712:0:99999:7:::
+bin:*:19712:0:99999:7:::
+sys:*:19712:0:99999:7:::
+mail:*:19712:0:99999:7:::
+www-data:$y$j9T$aB3cD5eF7gH9iJ1kL3mN5oP7qR9sT1uV3wX5yZ7:19712:0:99999:7:::
+mysql:!$6$xyzabc$defghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTU:19712:0:99999:7:::
+deploy:$y$j9T$7kL9pR2mN5vB7cQ9wE1yH3kT4nA6dF8gJ0sD2fG1hJ3kL5zX9cV7bN5m:19715:0:99999:7:::

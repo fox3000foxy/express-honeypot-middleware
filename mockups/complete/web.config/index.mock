@@ -1,4 +1,17 @@
-{
-  "status": "Web Configuration File",
-  "description": "This endpoint serves the web configuration file."
-}
+# Apache Configuration for Production App
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+    RewriteRule ^\.env - [F,L]
+    RewriteRule ^\.git - [F,L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>

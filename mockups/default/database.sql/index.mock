@@ -1,4 +1,14 @@
-{
-  "status": "Database SQL File",
-  "description": "This endpoint serves the database SQL file."
-}
+-- MySQL Dump
+-- Generated: 2026-06-10T08:09:10Z
+
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `users` (`username`, `password_hash`, `email`) VALUES
+('admin', '\$2y\$10\$abcdefghijklmnopqrstuvwx', 'admin@example.com');

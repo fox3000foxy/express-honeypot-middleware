@@ -1,4 +1,9 @@
 {
-  "status": "API Single Stock active",
-  "description": "This endpoint retrieves a single stock's information."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5x7",
+  "version": "2.4.1",
+  "endpoint": "getSingleStock.do",
+  "count": 42
 }

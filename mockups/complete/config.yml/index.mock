@@ -1,4 +1,4 @@
-{
-  "status": "YAML Config Endpoint active",
-  "description": "This endpoint serves YAML configuration."
-}
+app:
+  name: Application
+  env: production
+  debug: false

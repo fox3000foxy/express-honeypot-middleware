@@ -1,4 +1,13 @@
 {
-  "status": "VTI Private Authors Password",
-  "description": "This endpoint provides the VTI private authors password."
+  "repository": "https://svn.example.com/project/trunk",
+  "revision": 89234,
+  "last_committer": "admin",
+  "last_commit_date": "2026-06-10T08:09:10Z",
+  "files": 1243,
+  "authors": [
+    "admin",
+    "devops",
+    "john.doe",
+    "jane.smith"
+  ]
 }

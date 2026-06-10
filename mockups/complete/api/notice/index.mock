@@ -1,4 +1,9 @@
 {
-  "status": "Notice Endpoint active",
-  "description": "This endpoint serves notices."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5x6",
+  "version": "2.4.1",
+  "endpoint": "notice",
+  "count": 42
 }

@@ -1,4 +1,9 @@
 {
-  "status": "Get System Setting API active",
-  "description": "This endpoint retrieves system settings."
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "getSystemSetting",
+    "module": "masterControl",
+    "status": "active"
+  }
 }

@@ -1,4 +1,11 @@
-{
-  "status": "App Endpoint active",
-  "description": "This endpoint serves app-related requests."
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>APP</title>
+</head>
+<body>
+<h1>app</h1><main><p>Service endpoint active. Last checked: 2026-06-10T08:09:10Z</p><p>Status: operational</p></main>
+</body>
+</html>

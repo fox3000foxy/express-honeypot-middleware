@@ -1,4 +1,5 @@
 {
-  "status": "Meta Data active",
-  "description": "Meta configuration file."
+  "code": 0,
+  "message": "ok",
+  "environment": "dev"
 }

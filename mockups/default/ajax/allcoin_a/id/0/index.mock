@@ -1,4 +1,5 @@
 {
-  "status": "All Coin API active",
-  "description": "This endpoint retrieves all coin data."
+  "symbol": "0",
+  "price": 42150,
+  "change": "+2.34%"
 }

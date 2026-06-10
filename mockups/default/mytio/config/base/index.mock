@@ -1,4 +1,9 @@
 {
-  "status": "MyTio Base Config API active",
-  "description": "This endpoint provides MyTio base configuration."
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "base",
+    "module": "config",
+    "status": "active"
+  }
 }

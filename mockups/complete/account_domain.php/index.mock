@@ -1,15 +1,14 @@
-
-<html>
-<head>
-<title>Account Domain</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<h1>Account Domain</h1>
-<p>Domain configuration panel for accounts.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
-</body>
-</html>
+<?php
+// /account_domain.php endpoint
+header('Content-Type: application/json');
+echo json_encode([
+  'code' => 0,
+  'message' => 'ok',
+  'endpoint' => '/account_domain.php',
+  'php_version' => '8.1.12',
+  'memory' => '512M',
+  'execution_time' => '0.042s',
+  'db_status' => 'connected',
+  'cache_status' => 'hit',
+]);
+?>

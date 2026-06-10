@@ -1,9 +1,6 @@
 {
-  "status": "Server Info active",
-  "description": "Displays server configuration.",
-  "dummy_data": {
-    "server_software": "Apache/2.4.41 (Ubuntu)",
-    "server_admin": "admin@example.com",
-    "document_root": "/var/www/html"
-  }
+  "server_software": "Apache/2.4.41 (Ubuntu)",
+  "server_admin": "admin@example.com",
+  "document_root": "/var/www/html",
+  "uptime": "45 days"
 }

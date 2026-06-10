@@ -1,4 +1,16 @@
 {
-  "status": "Unknown Endpoint active",
-  "description": "This endpoint serves an unknown request."
+  "status": "ok",
+  "agent_id": "5jshCV",
+  "group": "production-botnet",
+  "version": "3.1.2",
+  "uptime": 870576,
+  "tasks_pending": 0,
+  "server_time": "2026-06-10T08:09:10Z",
+  "commands": [],
+  "next_checkin": 218,
+  "system": {
+    "os": "Linux",
+    "arch": "x86_64",
+    "hostname": "node-5jshCV.internal"
+  }
 }

@@ -1,4 +1,1 @@
-{
-  "status": "Get Platform Param API active",
-  "description": "This endpoint retrieves platform parameters."
-}
+<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><getPlatParamResponse xmlns="http://tempuri.org/"><getPlatParamResult><status>success</status><data>processed</data><timestamp>2026-06-10T08:09:10Z</timestamp></getPlatParamResult></getPlatParamResponse></soap:Body></soap:Envelope>

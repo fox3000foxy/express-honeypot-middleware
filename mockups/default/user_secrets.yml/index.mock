@@ -1,0 +1,5 @@
+{
+  "db_password": "P@ssw0rd!2025",
+  "api_key": "sk-proj-1234567890abcdef",
+  "jwt_secret": "my-super-secret-key-change-me"
+}

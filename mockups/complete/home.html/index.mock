@@ -1,4 +1,11 @@
-{
-  "status": "Home HTML active",
-  "description": "This endpoint serves the home HTML page."
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Home</title>
+</head>
+<body>
+<header><h1>Home Page</h1></header><main><p>Welcome to ACME Corporation. We are a leading provider of innovative solutions for businesses worldwide.</p><p>For more information, contact us at info@example.com or call +1 (555) 123-4567.</p></main><footer>&copy; 2025 ACME Corporation</footer>
+</body>
+</html>

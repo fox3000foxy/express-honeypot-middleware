@@ -8,29 +8,27 @@ export class UnhandledRoutesService {
     private readonly listAvailableEndpoints: () => string[],
   ) {}
 
-  getUnhandledRoutes(additionalEndpoints: string[], knownPathOptions: KnownPathOptions): string[] {
+  async getUnhandledRoutes(additionalEndpoints: string[], knownPathOptions: KnownPathOptions): Promise<string[]> {
     const availableEndpoints = this.listAvailableEndpoints();
-    const botsRequests = this.trafficService.getAllBotsRequests(knownPathOptions);
-    const unhandledRoutes: string[] = [];
+    const botEntries = await this.trafficService.getBotRequests(knownPathOptions);
+    const unhandledRoutes = new Set<string>();
 
-    botsRequests.split("\n").forEach((botRequest) => {
-      const requestPath = botRequest
-        .split(" - ")[2]
-        ?.replace(/^(GET|POST|DELETE|PUT|PATCH|HEAD) /, "")
-        .trim();
-
-      if (!requestPath) return;
+    for (const entry of botEntries) {
+      const requestPath = entry.path;
+      if (!requestPath) continue;
 
       const isKnown = PathClassifier.isKnownPath(requestPath, knownPathOptions).isKnown;
       const isAdditionalEndpoint = additionalEndpoints.includes(requestPath);
       const normalizedPath = PathClassifier.normalizePath(requestPath);
-      const isResponseKey = availableEndpoints.some((endpoint) => PathClassifier.normalizePath(endpoint) === normalizedPath);
+      const hasMockup = availableEndpoints.some(
+        (endpoint) => PathClassifier.normalizePath(endpoint) === normalizedPath,
+      );
 
-      if (!isKnown && !isAdditionalEndpoint && !isResponseKey) {
-        unhandledRoutes.push(requestPath);
+      if (!isKnown && !isAdditionalEndpoint && !hasMockup) {
+        unhandledRoutes.add(requestPath);
       }
-    });
+    }
 
-    return [...new Set(unhandledRoutes)];
+    return [...unhandledRoutes];
   }
 }

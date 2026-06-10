@@ -1,13 +1,15 @@
 {
-  "status": "PHP Info Page active",
-  "description": "Displays PHP configuration.",
-  "dummy_data": {
-    "php_version": "8.0.3",
-    "loaded_extensions": [
-      "mysqli",
-      "curl",
-      "mbstring"
-    ],
-    "configuration_file": "/etc/php/8.0/cli/php.ini"
-  }
+  "php_version": "8.1.12",
+  "server_software": "Apache/2.4.54 (Ubuntu)",
+  "loaded_extensions": [
+    "mysqli",
+    "curl",
+    "mbstring",
+    "gd",
+    "xml",
+    "json",
+    "openssl"
+  ],
+  "memory_limit": "256M",
+  "max_execution_time": 30
 }

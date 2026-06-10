@@ -1,0 +1,9 @@
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "help",
+    "module": "home",
+    "status": "active"
+  }
+}

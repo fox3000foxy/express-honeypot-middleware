@@ -1,4 +1,9 @@
 {
-  "status": "Get Article API active",
-  "description": "This endpoint retrieves an article based on the provided code."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5xd",
+  "version": "2.4.1",
+  "endpoint": "getArticle.do",
+  "count": 42
 }

@@ -1,4 +1,18 @@
 {
-  "status": "Hazelcast Cluster API active",
-  "description": "This endpoint provides Hazelcast cluster information."
+  "members": [
+    {
+      "address": "10.0.1.10:5701",
+      "uuid": "abc-123"
+    },
+    {
+      "address": "10.0.1.11:5701",
+      "uuid": "def-456"
+    },
+    {
+      "address": "10.0.1.12:5701",
+      "uuid": "ghi-789"
+    }
+  ],
+  "connectionCount": 42,
+  "clientCount": 15
 }

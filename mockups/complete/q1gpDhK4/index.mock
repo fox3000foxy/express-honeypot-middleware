@@ -1,4 +1,16 @@
 {
-  "status": "Unknown Endpoint active",
-  "description": "This endpoint serves an unknown request."
+  "status": "ok",
+  "agent_id": "q1gpDhK4",
+  "group": "production-botnet",
+  "version": "3.1.2",
+  "uptime": 1815069,
+  "tasks_pending": 0,
+  "server_time": "2026-06-10T08:09:10Z",
+  "commands": [],
+  "next_checkin": 206,
+  "system": {
+    "os": "Linux",
+    "arch": "x86_64",
+    "hostname": "node-q1gpDhK4.internal"
+  }
 }

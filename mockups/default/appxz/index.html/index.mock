@@ -1,15 +1,4 @@
-
-<html>
-<head>
-<title>AppXZ Index Page</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<h1>AppXZ Index Page</h1>
-<p>This page serves as the index for AppXZ services.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
-</body>
-</html>
+{
+  "status": "Index active",
+  "description": "This endpoint serves index content."
+}

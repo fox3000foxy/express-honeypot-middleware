@@ -1,4 +1,9 @@
 {
-  "status": "Server Config API active",
-  "description": "This endpoint provides server configuration settings."
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "config",
+    "module": "server",
+    "status": "active"
+  }
 }

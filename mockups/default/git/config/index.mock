@@ -1,4 +1,7 @@
-{
-  "status": "Git Configuration",
-  "description": "This endpoint provides Git configuration details."
-}
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+[remote "origin"]
+	url = https://github.com/org/project.git
+	fetch = +refs/heads/*:refs/remotes/origin/*

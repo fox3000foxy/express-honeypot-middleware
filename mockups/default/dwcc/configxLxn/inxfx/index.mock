@@ -1,4 +1,9 @@
 {
-  "status": "Config X Lxn API active",
-  "description": "This endpoint provides configuration for X Lxn."
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "inxfx",
+    "module": "configxLxn",
+    "status": "active"
+  }
 }

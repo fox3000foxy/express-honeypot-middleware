@@ -1,4 +1,17 @@
 {
-  "status": "Get System Coin API active",
-  "description": "This endpoint retrieves system coin information."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5x1",
+  "data": {
+    "type": "GetSysCoin",
+    "module": "Ctrls",
+    "status": "active",
+    "updated_at": "2026-06-10T08:09:10Z"
+  },
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 0
+  }
 }

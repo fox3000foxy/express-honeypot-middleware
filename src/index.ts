@@ -1,116 +1,208 @@
-import fetch from "node-fetch";
 import path from "path";
-import { MockupRepository } from "./services/mockupRepository";
+import { MockupRepository, MockupVariant } from "./services/mockupRepository";
 import { PathClassifier } from "./services/pathClassifier";
 import { TrafficService } from "./services/trafficService";
 import { UnhandledRoutesService } from "./services/unhandledRoutesService";
-import { HoneypotOptions, RouteApp } from "./types";
+import { HoneypotOptions, HoneypotInstance, RouteApp, KnownPathOptions, Middleware } from "./types";
 
-const additionalEndpoints = [
-  "/not_covered_endpoint_test",
-];
+const DEFAULT_ADDITIONAL_ENDPOINTS = ["/not_covered_endpoint_test"];
 
-function getCurrentTimestamp(): string {
+function getTimestamp(): string {
   return new Date().toISOString();
 }
 
-function buildRuntimeJsonResponse(response: Record<string, unknown>): Record<string, unknown> {
+function enrichResponse(response: Record<string, unknown>): Record<string, unknown> {
   return {
     ...response,
-    timestamp: getCurrentTimestamp(),
+    timestamp: getTimestamp(),
     version: "1.0",
-    lastUpdated: "2023-10-01",
+    lastUpdated: getTimestamp(),
   };
 }
 
-module.exports = (app: RouteApp, options: HoneypotOptions): void => {
-  const {
-    is404Handler,
-    logTraffic,
-    knownPaths,
-    knownApiPaths,
-    knownPatterns,
-    knownApiPatterns,
-    isCompleteResponses = false,
-  } = options;
+function isRouteApp(obj: unknown): obj is RouteApp {
+  return (
+    obj !== null &&
+    typeof obj === "object" &&
+    typeof (obj as RouteApp).use === "function" &&
+    typeof (obj as RouteApp).all === "function"
+  );
+}
 
-  const knownPathOptions = {
-    knownPaths,
-    knownPatterns,
-    knownApiPaths,
-    knownApiPatterns,
-  };
+function resolveProjectRoot(): string {
+  if (typeof __dirname !== "undefined" && __dirname !== ".") {
+    return path.resolve(__dirname, "..");
+  }
+  return process.cwd();
+}
 
-  const projectRoot = __dirname === "." ? process.cwd() : path.resolve(__dirname, "..");
-  const mockupRepository = new MockupRepository(path.join(projectRoot, "mockups"));
-  const trafficService = new TrafficService(projectRoot);
-  const unhandledRoutesService = new UnhandledRoutesService(trafficService, () => mockupRepository.getVariantEndpoints("default"));
-
-  if (logTraffic) {
-    trafficService.registerLoggingMiddleware(app, knownPathOptions);
+export function createHoneypot(
+  appOrOptions: RouteApp | HoneypotOptions,
+  options?: HoneypotOptions,
+): HoneypotInstance {
+  if (isRouteApp(appOrOptions)) {
+    const instance = createHoneypot(options!);
+    instance.register(appOrOptions);
+    return instance;
   }
 
-  const notCoveredAdditionalEndpoints = additionalEndpoints.filter(
-    (endpoint) => !mockupRepository.getVariantEndpoints("default").includes(endpoint),
+  const opts = appOrOptions as HoneypotOptions;
+  const {
+    logTraffic,
+    knownPaths = [],
+    knownApiPaths = [],
+    knownPatterns = [],
+    knownApiPatterns = [],
+    isCompleteResponses = false,
+    is404Handler,
+    additionalEndpoints = DEFAULT_ADDITIONAL_ENDPOINTS,
+    enrichResponses: shouldEnrich = true,
+  } = opts;
+
+  const knownPathOptions: KnownPathOptions = { knownPaths, knownPatterns, knownApiPaths, knownApiPatterns };
+
+  const projectRoot = resolveProjectRoot();
+  const mockupsDir = opts.mockupsDir || path.join(projectRoot, "mockups");
+  const mockupRepository = new MockupRepository(mockupsDir);
+  const trafficService = new TrafficService(projectRoot);
+  const unhandledRoutesService = new UnhandledRoutesService(trafficService, () =>
+    mockupRepository.getVariantEndpoints("default"),
   );
 
-  notCoveredAdditionalEndpoints.forEach((endpoint) => {
-    mockupRepository.ensureMockupForEndpoint(endpoint, "default", {
+  const notCoveredAdditionalEndpoints = additionalEndpoints.filter(
+    (ep) => !mockupRepository.getVariantEndpoints("default").includes(ep),
+  );
+
+  const variant: MockupVariant = isCompleteResponses ? "complete" : "default";
+
+  for (const endpoint of notCoveredAdditionalEndpoints) {
+    mockupRepository.ensureMockupForEndpoint(endpoint, variant, {
       status: "Endpoint active",
       description: `This endpoint is active and serves requests for ${endpoint}.`,
     });
-  });
+  }
 
-  const variant = isCompleteResponses ? "complete" : "default";
-  const endpoints = mockupRepository.getVariantEndpoints(variant);
+  const allEndpoints = mockupRepository.getVariantEndpoints(variant);
 
-  endpoints.forEach((endpoint) => {
-    const isKnown = PathClassifier.isKnownPath(endpoint, knownPathOptions).isKnown;
-    if (isKnown) return;
+  const mocks: Record<string, Middleware> = {};
+  const responseCache = new Map<string, unknown>();
 
-    app.all(endpoint, async (_req: any, res: any) => {
-      const response = mockupRepository.getMockupResponse(endpoint, variant);
-      if (response === null) {
+  for (const endpoint of allEndpoints) {
+    if (PathClassifier.isKnownPath(endpoint, knownPathOptions).isKnown) continue;
+
+    const response = mockupRepository.getMockupResponse(endpoint, variant);
+    responseCache.set(endpoint, response);
+
+    const matches = endpoint === "/"
+      ? (p: string) => p === "/"
+      : (p: string) => p === endpoint || p.startsWith(endpoint + "/");
+
+    mocks[endpoint] = (req: any, res: any, next: any) => {
+      if (!matches(req.path)) return next?.();
+
+      const cached = responseCache.get(endpoint);
+      if (cached === null || cached === undefined) {
         res.status(500).send("Invalid response format");
         return;
       }
 
-      if (typeof response === "string") {
-        res.send(response);
+      if (typeof cached === "string") {
+        res.send(cached);
         return;
       }
 
-      if (typeof response === "object") {
-        res.json(buildRuntimeJsonResponse(response as Record<string, unknown>));
+      if (typeof cached === "object") {
+        res.json(shouldEnrich ? enrichResponse(cached as Record<string, unknown>) : cached);
         return;
       }
 
       res.status(500).send("Invalid response format");
-    });
-  });
-
-  app.get("/newBotsRoute", (_req: any, res: any) => {
-    const unhandledRoutes = unhandledRoutesService.getUnhandledRoutes(additionalEndpoints, knownPathOptions);
-    res.setHeader("Content-Type", "text/plain");
-    res.send(unhandledRoutes.join("\n"));
-  });
-
-  app.get("/notCoveredAdditionalEndpoints", (_req: any, res: any) => {
-    res.setHeader("Content-Type", "application/json");
-    res.send(JSON.stringify(notCoveredAdditionalEndpoints));
-  });
-
-  app.get("*.php", async (req: any, res: any) => {
-    const host = req.headers.host;
-    const protocol = host.startsWith("localhost") ? "http" : "https";
-    const response = await fetch(`${protocol}://${host}${req.originalUrl.split(".php")[0]}`);
-    const html = await response.text();
-    res.send(html);
-  });
-
-  if (is404Handler) {
-    app.use((_req: any, res: any) => {
-      res.status(404).send("<html><body><h1>404 Not Found</h1><p>The requested resource was not found on this server.</p></body></html>");
-    });
+    };
   }
-};
+
+  const phpSpoofer: Middleware = async (req: any, res: any, next: any) => {
+    if (!req.path?.match(/\.php$/)) {
+      return next?.();
+    }
+
+    try {
+      const host = req.headers?.host;
+      if (!host || typeof host !== "string") {
+        return next?.();
+      }
+
+      if (
+        !host.startsWith("localhost") &&
+        !host.startsWith("127.0.0.1") &&
+        !host.startsWith("[::1]")
+      ) {
+        res.status(404).send("<html><body><h1>404 Not Found</h1></body></html>");
+        return;
+      }
+
+      const baseUrl = (req.originalUrl || req.url).replace(/\.php.*$/, "");
+      const response = await fetch(`http://${host}${baseUrl}`);
+
+      if (!response.ok) {
+        res.status(404).send("<html><body><h1>404 Not Found</h1></body></html>");
+        return;
+      }
+
+      const html = await response.text();
+      res.send(html);
+    } catch {
+      res.status(500).send("<html><body><h1>Internal Server Error</h1></body></html>");
+    }
+  };
+
+  const notFoundHandler: Middleware = (_req: any, res: any) => {
+    res.status(404).send(
+      "<html><body><h1>404 Not Found</h1><p>The requested resource was not found on this server.</p></body></html>",
+    );
+  };
+
+  const instance: HoneypotInstance = {
+    mocks,
+    phpSpoofer,
+    notFoundHandler,
+
+    register(app: RouteApp) {
+      if (logTraffic) {
+        app.use(trafficService.createLoggingMiddleware());
+      }
+
+      for (const [endpoint, handler] of Object.entries(mocks)) {
+        app.all(endpoint, handler);
+      }
+
+      app.get(/\.php$/, phpSpoofer);
+
+      app.get("/newBotsRoute", async (_req: any, res: any) => {
+        const routes = await unhandledRoutesService.getUnhandledRoutes(additionalEndpoints, knownPathOptions);
+        res.setHeader("Content-Type", "text/plain");
+        res.send(routes.join("\n"));
+      });
+
+      app.get("/notCoveredAdditionalEndpoints", (_req: any, res: any) => {
+        res.setHeader("Content-Type", "application/json");
+        res.send(JSON.stringify(notCoveredAdditionalEndpoints));
+      });
+
+      if (is404Handler) {
+        app.use(notFoundHandler);
+      }
+    },
+
+    async getUnhandledRoutes() {
+      return unhandledRoutesService.getUnhandledRoutes(additionalEndpoints, knownPathOptions);
+    },
+
+    getNotCoveredEndpoints() {
+      return [...notCoveredAdditionalEndpoints];
+    },
+  };
+
+  return instance;
+}
+
+export default createHoneypot;

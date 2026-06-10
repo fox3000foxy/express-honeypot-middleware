@@ -1,4 +1,1 @@
-{
-  "status": "XML Config Endpoint active",
-  "description": "This endpoint serves XML configuration."
-}
+<configuration><app><name>Application</name><env>prod</env></app></configuration>

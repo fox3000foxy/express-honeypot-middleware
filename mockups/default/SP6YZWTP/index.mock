@@ -1,0 +1,6 @@
+{
+  "status": "ok",
+  "agent_id": "SP6YZWTP",
+  "task": "heartbeat",
+  "interval": 60
+}

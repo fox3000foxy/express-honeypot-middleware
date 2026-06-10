@@ -1,4 +1,9 @@
 {
-  "status": "Get Top Question API active",
-  "description": "This endpoint retrieves top questions."
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "getTopQuestion",
+    "module": "other",
+    "status": "active"
+  }
 }

@@ -1,4 +1,1 @@
-{
-  "status": "Shadow Password File",
-  "description": "This endpoint serves the shadow password file."
-}
+root:$y$j9T$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGH:19712:0:99999:7:::

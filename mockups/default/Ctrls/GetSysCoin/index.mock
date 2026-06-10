@@ -1,4 +1,9 @@
 {
-  "status": "Get System Coin API active",
-  "description": "This endpoint retrieves system coin information."
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "GetSysCoin",
+    "module": "Ctrls",
+    "status": "active"
+  }
 }

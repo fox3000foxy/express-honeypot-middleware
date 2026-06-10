@@ -1,9 +1,5 @@
 {
-  "status": "API Admin Settings active",
-  "description": "Handles admin settings.",
-  "settings": {
-    "theme": "dark",
-    "notifications": true,
-    "language": "en-US"
-  }
+  "code": 0,
+  "message": "ok",
+  "endpoint": "settings.php"
 }

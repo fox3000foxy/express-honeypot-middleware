@@ -1,4 +1,9 @@
 {
-  "status": "Download Info API active",
-  "description": "This endpoint provides download information."
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "info",
+    "module": "download",
+    "status": "active"
+  }
 }

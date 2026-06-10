@@ -3,41 +3,59 @@ import path from "path";
 
 export type MockupVariant = "default" | "complete";
 
+interface VariantCache {
+  endpoints: string[];
+  responses: Map<string, unknown>;
+}
+
 export class MockupRepository {
-  constructor(private readonly rootDir: string) {}
+  private cache: Map<MockupVariant, VariantCache> = new Map();
 
-  getVariantEndpoints(variant: MockupVariant): string[] {
-    const variantRoot = path.join(this.rootDir, variant);
-    if (!fs.existsSync(variantRoot)) return [];
+  constructor(private readonly rootDir: string) {
+    this.preloadVariant("default");
+    this.preloadVariant("complete");
+  }
 
-    const endpoints: string[] = [];
+  private preloadVariant(variant: MockupVariant): void {
+    const variantPath = path.join(this.rootDir, variant);
+    const cache: VariantCache = { endpoints: [], responses: new Map() };
+
+    if (!fs.existsSync(variantPath)) {
+      this.cache.set(variant, cache);
+      return;
+    }
 
     const walk = (currentPath: string) => {
       const entries = fs.readdirSync(currentPath, { withFileTypes: true });
-      entries.forEach((entry: fs.Dirent) => {
+      for (const entry of entries) {
         const entryPath = path.join(currentPath, entry.name);
         if (entry.isDirectory()) {
           walk(entryPath);
-          return;
+          continue;
         }
+        if (entry.name !== "index.mock") continue;
 
-        if (entry.name !== "index.mock") return;
-
-        const relativePath = path.relative(variantRoot, entryPath).split(path.sep).join("/");
+        const relativePath = path.relative(variantPath, entryPath).split(path.sep).join("/");
         const endpoint = relativePath === "index.mock" ? "/" : `/${relativePath.replace(/\/index\.mock$/, "")}`;
-        endpoints.push(endpoint);
-      });
+
+        const content = fs.readFileSync(entryPath, "utf-8");
+        const response = this.parseResponse(content);
+
+        cache.endpoints.push(endpoint);
+        cache.responses.set(endpoint, response);
+      }
     };
 
-    walk(variantRoot);
-    return endpoints;
+    walk(variantPath);
+    this.cache.set(variant, cache);
+  }
+
+  getVariantEndpoints(variant: MockupVariant): string[] {
+    return this.cache.get(variant)?.endpoints ?? [];
   }
 
   getMockupResponse(endpoint: string, variant: MockupVariant): unknown | null {
-    const filePath = this.endpointToMockupPath(endpoint, variant);
-    if (!fs.existsSync(filePath)) return null;
-    const content = fs.readFileSync(filePath, "utf-8");
-    return this.parseResponse(content);
+    return this.cache.get(variant)?.responses.get(endpoint) ?? null;
   }
 
   ensureMockupForEndpoint(endpoint: string, variant: MockupVariant, responseObject: unknown): void {
@@ -49,7 +67,14 @@ export class MockupRepository {
     }
 
     if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, JSON.stringify(responseObject, null, 2), "utf-8");
+      const content = JSON.stringify(responseObject, null, 2);
+      fs.writeFileSync(filePath, content, "utf-8");
+
+      const cache = this.cache.get(variant);
+      if (cache) {
+        cache.endpoints.push(endpoint);
+        cache.responses.set(endpoint, this.parseResponse(content));
+      }
     }
   }
 
@@ -66,14 +91,10 @@ export class MockupRepository {
 
   private parseResponse(fileContent: string): unknown {
     const trimmed = fileContent.trim();
-    if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
-      try {
-        return JSON.parse(trimmed);
-      } catch (_error) {
-        return fileContent;
-      }
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return fileContent;
     }
-
-    return fileContent;
   }
 }

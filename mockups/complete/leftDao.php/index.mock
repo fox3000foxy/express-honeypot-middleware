@@ -1,4 +1,14 @@
-{
-  "status": "Left DAO API active",
-  "description": "This endpoint provides left DAO functionalities."
-}
+<?php
+// /leftDao.php endpoint
+header('Content-Type: application/json');
+echo json_encode([
+  'code' => 0,
+  'message' => 'ok',
+  'endpoint' => '/leftDao.php',
+  'php_version' => '8.1.12',
+  'memory' => '512M',
+  'execution_time' => '0.042s',
+  'db_status' => 'connected',
+  'cache_status' => 'hit',
+]);
+?>

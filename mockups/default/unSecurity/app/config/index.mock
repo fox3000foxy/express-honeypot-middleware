@@ -1,4 +1,9 @@
 {
-  "status": "Unsecurity App Config API active",
-  "description": "This endpoint provides unsecurity app configuration."
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "config",
+    "module": "app",
+    "status": "active"
+  }
 }

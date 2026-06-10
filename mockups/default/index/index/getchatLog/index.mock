@@ -1,4 +1,7 @@
 {
-  "status": "Get Chat Log API active",
-  "description": "This endpoint retrieves chat logs."
+  "code": 0,
+  "message": "ok",
+  "endpoint": "getchatLog",
+  "module": "index",
+  "ts": "2026-06-10T08:09:10Z"
 }

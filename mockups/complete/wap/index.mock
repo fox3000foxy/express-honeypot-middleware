@@ -1,15 +1,11 @@
-
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>WAP Page</title>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>WAP</title>
 </head>
 <body>
-<h1>WAP Page</h1>
-<p>This page is designed for WAP services.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
+<h1>wap</h1><main><p>Service endpoint active. Last checked: 2026-06-10T08:09:10Z</p><p>Status: operational</p></main>
 </body>
 </html>

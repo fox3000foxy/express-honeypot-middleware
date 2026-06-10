@@ -1,4 +1,9 @@
 {
-  "status": "Get Room Bang Fans API active",
-  "description": "This endpoint retrieves room bang fans data."
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "getRoomBangFans",
+    "module": "room",
+    "status": "active"
+  }
 }

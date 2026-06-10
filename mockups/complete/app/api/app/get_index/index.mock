@@ -1,4 +1,9 @@
 {
-  "status": "App Get Index API active",
-  "description": "This endpoint retrieves the app index."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5x8",
+  "version": "2.4.1",
+  "endpoint": "get_index",
+  "count": 42
 }

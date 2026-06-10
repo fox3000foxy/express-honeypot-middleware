@@ -1,4 +1,18 @@
-{
-  "status": "CGI Config active",
-  "description": "This endpoint serves CGI configuration."
-}
+SYSTEM CONFIGURATION
+[network]
+ip=10.0.0.1
+mask=255.255.255.0
+gateway=10.0.0.254
+
+[admin]
+password_hash=21232f297a57a5a743894a0e4a801fc3
+session_timeout=3600
+
+[services]
+httpd=1
+ftpd=1
+telnetd=0
+snmpd=1
+
+[snmp]
+community=public

@@ -1,15 +1,14 @@
-
-<html>
-<head>
-<title>Init JS Page</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<h1>Init JS Page</h1>
-<p>This page initializes JavaScript functionalities.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
-</body>
-</html>
+<?php
+// /Public/initJs.php endpoint
+header('Content-Type: application/json');
+echo json_encode([
+  'code' => 0,
+  'message' => 'ok',
+  'endpoint' => '/Public/initJs.php',
+  'php_version' => '8.1.12',
+  'memory' => '512M',
+  'execution_time' => '0.042s',
+  'db_status' => 'connected',
+  'cache_status' => 'hit',
+]);
+?>

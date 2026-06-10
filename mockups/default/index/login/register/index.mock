@@ -1,15 +1,7 @@
-
-<html>
-<head>
-<title>Login Register Page</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<h1>Login Register Page</h1>
-<p>This page allows users to register while logging in.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
-</body>
-</html>
+{
+  "code": 0,
+  "message": "ok",
+  "endpoint": "register",
+  "module": "login",
+  "ts": "2026-06-10T08:09:10Z"
+}

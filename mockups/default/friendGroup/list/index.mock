@@ -1,15 +1,9 @@
-
-<html>
-<head>
-<title>Friend Group List Page</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<h1>Friend Group List Page</h1>
-<p>This page provides a list of friend groups.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
-</body>
-</html>
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "list",
+    "module": "friendGroup",
+    "status": "active"
+  }
+}

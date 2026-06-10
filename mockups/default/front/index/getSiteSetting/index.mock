@@ -1,4 +1,7 @@
 {
-  "status": "Get Site Setting API active",
-  "description": "This endpoint retrieves site settings."
+  "code": 0,
+  "message": "ok",
+  "endpoint": "getSiteSetting",
+  "module": "index",
+  "ts": "2026-06-10T08:09:10Z"
 }

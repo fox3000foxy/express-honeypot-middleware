@@ -1,4 +1,17 @@
 {
-  "status": "Get System Setting API active",
-  "description": "This endpoint retrieves system settings."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5xm",
+  "data": {
+    "type": "getSystemSetting",
+    "module": "masterControl",
+    "status": "active",
+    "updated_at": "2026-06-10T08:09:10Z"
+  },
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 0
+  }
 }

@@ -1,4 +1,9 @@
 {
-  "status": "Common Config Key API active",
-  "description": "This endpoint retrieves all common configuration keys."
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "type": "all",
+    "module": "configKey",
+    "status": "active"
+  }
 }

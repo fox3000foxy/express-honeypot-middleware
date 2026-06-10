@@ -1,4 +1,15 @@
 {
-  "status": "PHP Info Page",
-  "description": "This endpoint provides PHP configuration information."
+  "php_version": "8.1.12",
+  "server_software": "Apache/2.4.54 (Ubuntu)",
+  "loaded_extensions": [
+    "mysqli",
+    "curl",
+    "mbstring",
+    "gd",
+    "xml",
+    "json",
+    "openssl"
+  ],
+  "memory_limit": "256M",
+  "max_execution_time": 30
 }

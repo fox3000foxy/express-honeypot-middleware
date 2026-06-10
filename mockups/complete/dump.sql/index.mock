@@ -1,4 +1,42 @@
-{
-  "status": "SQL Dump File",
-  "description": "This endpoint serves the SQL dump file."
-}
+-- MySQL Dump for production_app
+-- Generated: 2026-06-10T08:09:10Z
+-- Server: 8.0.35-0ubuntu0.22.04.1
+
+CREATE DATABASE IF NOT EXISTS `production_app` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `production_app`;
+
+CREATE TABLE `users` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` char(36) NOT NULL,
+  `username` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `role` enum('admin','user','moderator') NOT NULL DEFAULT 'user',
+  `status` enum('active','inactive','suspended') NOT NULL DEFAULT 'active',
+  `last_login_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `users_uuid_unique` (`uuid`),
+  UNIQUE KEY `users_username_unique` (`username`),
+  UNIQUE KEY `users_email_unique` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `users` (`uuid`, `username`, `password_hash`, `email`, `role`, `status`) VALUES
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'admin', '\$2y\$12\$LJ3m8qX5Rp7NvBc9wE1yH', 'admin@example.com', 'admin', 'active'),
+('b2c3d4e5-f6a7-8901-bcde-f12345678901', 'john.doe', '\$2y\$12\$aB3cD5eF7gH9iJ1kL3mN5oP', 'john@example.com', 'user', 'active'),
+('c3d4e5f6-a7b8-9012-cdef-123456789012', 'jane.smith', '\$2y\$12\$mN5oP7qR9sT1uV3wX5yZ7a', 'jane@example.com', 'user', 'active');
+
+CREATE TABLE `products` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `sku` varchar(50) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `stock` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `products_sku_unique` (`sku`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `products` (`sku`, `name`, `price`, `stock`) VALUES
+('SKU-001', 'Premium Widget', 49.99, 250),
+('SKU-002', 'Basic Gadget', 19.99, 1000);

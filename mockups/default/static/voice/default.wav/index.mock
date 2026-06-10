@@ -1,4 +1,7 @@
 {
-  "status": "Default Voice File",
-  "description": "This endpoint serves the default voice file."
+  "code": 0,
+  "message": "ok",
+  "endpoint": "default.wav",
+  "module": "voice",
+  "ts": "2026-06-10T08:09:10Z"
 }

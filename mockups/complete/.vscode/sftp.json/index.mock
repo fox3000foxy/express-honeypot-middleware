@@ -1,4 +1,11 @@
 {
-  "status": "VSCode SFTP Configuration",
-  "description": "This endpoint serves SFTP configuration for VSCode."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5wz",
+  "version": "2.4.1",
+  "host": "production-server",
+  "protocol": "sftp",
+  "username": "deploy",
+  "remotePath": "/var/www/production"
 }

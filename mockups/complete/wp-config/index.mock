@@ -1,4 +1,22 @@
-{
-  "status": "WP Config active",
-  "description": "This endpoint serves the WordPress configuration."
-}
+<?php
+/** Production WordPress Configuration */
+define('DB_NAME', 'production_wp_db');
+define('DB_USER', 'wp_admin_service');
+define('DB_PASSWORD', 'wP!s3cur3#K3y2025');
+define('DB_HOST', 'db-master-01.internal.example.com:3306');
+define('DB_CHARSET', 'utf8mb4');
+define('DB_COLLATE', 'utf8mb4_unicode_ci');
+
+define('AUTH_KEY', '6f8a7b9c0d1e2f3a4b5c6d7e8f9a0b1c');
+define('SECURE_AUTH_KEY', '9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d');
+define('LOGGED_IN_KEY', '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d');
+define('NONCE_KEY', '5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b');
+
+define('WP_HOME', 'https://admin.internal.example.com');
+define('WP_SITEURL', 'https://admin.internal.example.com');
+define('WP_DEBUG', false);
+define('DISALLOW_FILE_EDIT', true);
+
+$table_prefix = 'wp_prod_';
+if (!defined('ABSPATH')) define('ABSPATH', '/var/www/production/wp/');
+require_once ABSPATH . 'wp-settings.php';

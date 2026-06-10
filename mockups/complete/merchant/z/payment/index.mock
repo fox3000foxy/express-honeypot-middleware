@@ -1,15 +1,14 @@
-
-<html>
-<head>
-<title>Merchant Payment Page</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<h1>Merchant Payment Page</h1>
-<p>This page processes merchant payments.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
-</body>
-</html>
+{
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5xm",
+  "version": "2.4.1",
+  "merchant_id": "MCH-2025-8912",
+  "status": "approved",
+  "tier": "premium",
+  "balance": 1250000,
+  "currency": "USDT",
+  "fee_rate": "0.1%",
+  "daily_volume_limit": 500000
+}

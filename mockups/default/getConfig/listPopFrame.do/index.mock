@@ -1,4 +1,5 @@
 {
-  "status": "List Pop Frame API active",
-  "description": "This endpoint retrieves a list of pop frames based on the provided parameters."
+  "code": 0,
+  "message": "ok",
+  "endpoint": "listPopFrame.do"
 }

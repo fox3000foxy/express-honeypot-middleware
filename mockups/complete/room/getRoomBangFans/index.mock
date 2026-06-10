@@ -1,4 +1,17 @@
 {
-  "status": "Get Room Bang Fans API active",
-  "description": "This endpoint retrieves room bang fans data."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5xq",
+  "data": {
+    "type": "getRoomBangFans",
+    "module": "room",
+    "status": "active",
+    "updated_at": "2026-06-10T08:09:10Z"
+  },
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 0
+  }
 }

@@ -1,4 +1,17 @@
 {
-  "status": "Common Config Key API active",
-  "description": "This endpoint retrieves all common configuration keys."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5xt",
+  "data": {
+    "type": "all",
+    "module": "configKey",
+    "status": "active",
+    "updated_at": "2026-06-10T08:09:10Z"
+  },
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 42
+  }
 }

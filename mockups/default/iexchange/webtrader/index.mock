@@ -1,4 +1,5 @@
 {
-  "status": "Web Trader API active",
-  "description": "This endpoint provides web trading functionalities."
+  "symbol": "WEBTRADER",
+  "price": 42150,
+  "change": "+2.34%"
 }

@@ -1,4 +1,10 @@
 {
-  "status": "Mobile Item List active",
-  "description": "This endpoint provides mobile item listings."
+  "success": true,
+  "code": 200,
+  "timestamp": "2026-06-10T08:09:10Z",
+  "request_id": "req_mq7sf5xm",
+  "version": "2.4.1",
+  "endpoint": "get_item_list",
+  "module": "mobile",
+  "ts": "2026-06-10T08:09:10Z"
 }

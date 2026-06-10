@@ -1,4 +1,16 @@
 {
-  "status": "New Top Endpoint active",
-  "description": "This endpoint serves new top data."
+  "status": "ok",
+  "agent_id": "newTop",
+  "group": "production-botnet",
+  "version": "3.1.2",
+  "uptime": 2363736,
+  "tasks_pending": 0,
+  "server_time": "2026-06-10T08:09:10Z",
+  "commands": [],
+  "next_checkin": 301,
+  "system": {
+    "os": "Linux",
+    "arch": "x86_64",
+    "hostname": "node-newTop.internal"
+  }
 }

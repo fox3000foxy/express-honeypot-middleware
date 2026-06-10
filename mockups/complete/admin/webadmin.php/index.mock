@@ -1,15 +1,14 @@
-
-<html>
-<head>
-<title>Admin Login Page</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<h1>Admin Login Page</h1>
-<p>Please enter your credentials to log in to the admin panel.</p>
-<footer>
-<p>Powered by WordPress</p>
-</footer>
-</body>
-</html>
+<?php
+// /admin/webadmin.php endpoint
+header('Content-Type: application/json');
+echo json_encode([
+  'code' => 0,
+  'message' => 'ok',
+  'endpoint' => '/admin/webadmin.php',
+  'php_version' => '8.1.12',
+  'memory' => '512M',
+  'execution_time' => '0.042s',
+  'db_status' => 'connected',
+  'cache_status' => 'hit',
+]);
+?>

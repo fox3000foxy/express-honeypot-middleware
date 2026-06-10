@@ -1,4 +1,12 @@
 {
-  "status": "Kline Chart active",
-  "description": "This endpoint provides 1-minute kline data."
+  "symbol": "1",
+  "price": 42150,
+  "open": 41200,
+  "high": 42580,
+  "low": 41050,
+  "volume": 1250000,
+  "change": "+2.34%",
+  "timestamp": "2026-06-10T08:09:10Z",
+  "exchange": "binance",
+  "status": "open"
 }

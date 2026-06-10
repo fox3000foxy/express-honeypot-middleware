@@ -1,5 +1,4 @@
-
-<config>
-    <status>YAML Config Endpoint active</status>
-    <description>YAML configuration file.</description>
-</config>
+app:
+  name: Application
+  env: development
+  debug: true
