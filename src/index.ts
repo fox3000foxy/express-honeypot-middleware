@@ -148,8 +148,29 @@ export function createHoneypot(
     );
   };
 
+  const middleware: Middleware = (req: any, res: any, next: any) => {
+    const path = req.path || "";
+    if (PathClassifier.isKnownPath(path, knownPathOptions).isKnown) return next?.();
+
+    const response = mockupRepository.getMockupResponse(path, variant);
+    if (response === null || response === undefined) return next?.();
+
+    if (shouldEnrich) {
+      try {
+        const parsed = JSON.parse(response);
+        if (parsed && typeof parsed === "object") {
+          res.json(enrichResponse(parsed));
+          return;
+        }
+      } catch { /* not JSON — send as-is */ }
+    }
+
+    res.send(response);
+  };
+
   const instance: HoneypotInstance = {
     mocks,
+    middleware,
     phpSpoofer,
     notFoundHandler,
 

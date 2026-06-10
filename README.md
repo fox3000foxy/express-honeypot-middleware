@@ -21,6 +21,8 @@ npm install express-middleware-honeypot
 
 ## Basic Usage
 
+### With `register()` (auto-registers all routes)
+
 ```js
 const express = require("express");
 const { createHoneypot } = require("express-middleware-honeypot");
@@ -44,7 +46,23 @@ app.listen(3000, () => {
 });
 ```
 
-Or with the shorthand signature:
+### With `app.use()` (single catch-all middleware)
+
+```js
+const { createHoneypot } = require("express-middleware-honeypot");
+
+const app = express();
+
+// Your real routes first
+app.get("/", (req, res) => res.send("Home"));
+
+// Then the honeypot catch-all
+const instance = createHoneypot({ /* options */ });
+app.use(instance.middleware);
+app.use(instance.phpSpoofer);
+```
+
+### Shorthand (auto-registers)
 
 ```js
 createHoneypot(app, { knownPaths: [], ... });
@@ -108,6 +126,7 @@ bun run scripts/generate-mockups.ts --list-uncategorized  # show catchall endpoi
 ```ts
 interface HoneypotInstance {
   mocks: Record<string, Middleware>;       // Individual mock handlers
+  middleware: Middleware;                  // Single catch-all (use with app.use())
   phpSpoofer: Middleware;                  // PHP spoofing middleware
   notFoundHandler: Middleware;             // 404 fallback handler
   register(app: RouteApp): void;           // Register all handlers on an Express app
