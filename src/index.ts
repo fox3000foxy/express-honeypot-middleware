@@ -10,6 +10,32 @@ function getTimestamp(): string {
   return new Date().toISOString();
 }
 
+function randomDelay(): number {
+  return Math.floor(Math.random() * 250) + 50; // 50-300ms
+}
+
+const NGINX_VERSIONS = ["1.24.0", "1.26.0", "1.26.2", "1.27.0"];
+
+function getNginxVersion(): string {
+  return NGINX_VERSIONS[Math.floor(Math.random() * NGINX_VERSIONS.length)];
+}
+
+function detectContentType(response: string): string {
+  const trimmed = response.trimStart();
+  if (trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html") || trimmed.startsWith("<string")) return "text/html; charset=utf-8";
+  if (trimmed.startsWith("<?xml")) return "application/xml; charset=utf-8";
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) return "application/json; charset=utf-8";
+  if (trimmed.startsWith("#") || trimmed.startsWith("SET ") || trimmed.startsWith("CREATE ") || trimmed.startsWith("--")) return "text/plain; charset=utf-8";
+  if (trimmed.startsWith("-----BEGIN")) return "application/x-pem-file";
+  if (trimmed.startsWith("[") && trimmed.includes("]")) return "text/plain; charset=utf-8"; // .env style
+  if (trimmed.startsWith("worker_processes") || trimmed.startsWith("server {") || trimmed.startsWith("ServerRoot") || trimmed.startsWith("RewriteEngine") || trimmed.startsWith("pipeline {")) return "text/plain; charset=utf-8";
+  if (trimmed.startsWith("apiVersion:") || trimmed.startsWith("version:")) return "text/plain; charset=utf-8"; // YAML
+  if (trimmed.startsWith("name:")) return "text/plain; charset=utf-8"; // YAML/GHA
+  if (trimmed.startsWith("image:")) return "text/plain; charset=utf-8"; // YAML
+  if (trimmed.startsWith("PK\u0003")) return "application/octet-stream";
+  return "text/html; charset=utf-8";
+}
+
 function enrichResponse(response: Record<string, unknown>): Record<string, unknown> {
   return {
     ...response,
@@ -92,18 +118,22 @@ export function createHoneypot(
         return;
       }
 
-      // Attempt to parse as JSON for enrichment, fall back to raw string
-      if (shouldEnrich) {
-        try {
-          const parsed = JSON.parse(response);
-          if (parsed && typeof parsed === "object") {
-            res.json(enrichResponse(parsed));
-            return;
-          }
-        } catch { /* not JSON — send as-is */ }
-      }
+      setTimeout(() => {
+        res.setHeader("Content-Type", detectContentType(response));
 
-      res.send(response);
+        // Attempt to parse as JSON for enrichment, fall back to raw string
+        if (shouldEnrich) {
+          try {
+            const parsed = JSON.parse(response);
+            if (parsed && typeof parsed === "object") {
+              res.json(enrichResponse(parsed));
+              return;
+            }
+          } catch { /* not JSON — send as-is */ }
+        }
+
+        res.send(response);
+      }, randomDelay());
     };
   }
 
@@ -149,12 +179,15 @@ export function createHoneypot(
   };
 
   const headersMiddleware: Middleware = (req: any, res: any, next: any) => {
-    res.setHeader("Server", "nginx/1.24.0");
+    res.setHeader("Server", `nginx/${getNginxVersion()}`);
     res.setHeader("X-Frame-Options", "SAMEORIGIN");
     res.setHeader("X-XSS-Protection", "1; mode=block");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Robots-Tag", "noindex, nofollow");
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("X-RateLimit-Limit", "100");
+    res.setHeader("X-RateLimit-Remaining", String(Math.floor(Math.random() * 95) + 5));
+    res.setHeader("X-RateLimit-Reset", String(Math.floor(Date.now() / 1000) + 3600));
 
     // Realistic X-Powered-By based on file extension
     const path = req.path || "";
@@ -173,17 +206,21 @@ export function createHoneypot(
     const response = mockupRepository.getMockupResponse(path, variant);
     if (response === null || response === undefined) return next?.();
 
-    if (shouldEnrich) {
-      try {
-        const parsed = JSON.parse(response);
-        if (parsed && typeof parsed === "object") {
-          res.json(enrichResponse(parsed));
-          return;
-        }
-      } catch { /* not JSON — send as-is */ }
-    }
+    setTimeout(() => {
+      res.setHeader("Content-Type", detectContentType(response));
 
-    res.send(response);
+      if (shouldEnrich) {
+        try {
+          const parsed = JSON.parse(response);
+          if (parsed && typeof parsed === "object") {
+            res.json(enrichResponse(parsed));
+            return;
+          }
+        } catch { /* not JSON — send as-is */ }
+      }
+
+      res.send(response);
+    }, randomDelay());
   };
 
   const instance: HoneypotInstance = {

@@ -5,6 +5,18 @@ function ts(): string {
   return new Date().toISOString().replace(/\.\d{3}/, "");
 }
 
+function randInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const NGINX_VERSIONS = ["1.24.0", "1.26.0", "1.26.2", "1.27.0"];
+const PHP_VERSIONS = ["8.1.12", "8.2.15", "8.3.2"];
+const APACHE_VERSIONS = ["2.4.54", "2.4.58", "2.4.59"];
+
+function randomNginxVersion(): string { return NGINX_VERSIONS[randInt(0, NGINX_VERSIONS.length - 1)]; }
+function randomPhpVersion(): string { return PHP_VERSIONS[randInt(0, PHP_VERSIONS.length - 1)]; }
+function randomApacheVersion(): string { return APACHE_VERSIONS[randInt(0, APACHE_VERSIONS.length - 1)]; }
+
 function j(v: Variant, data: Record<string, unknown>): string {
   const base = v === "default"
     ? { code: 0, message: "ok" }
@@ -21,13 +33,13 @@ function html(title: string, body: string): string {
 function genEnv(v: Variant): string {
   return v === "default"
     ? "DB_HOST=localhost\nDB_USER=root\nDB_PASS=s3cur3P@ss\nAPP_ENV=development\nAPP_DEBUG=true"
-    : `# Database\nDB_CONNECTION=mysql\nDB_HOST=db-master-01.internal.example.com\nDB_PORT=3306\nDB_DATABASE=production_app_v2\nDB_USER=admin_service\nDB_PASS=mM9k#2\\$xL!qR7pZ\n\n# Redis\nREDIS_HOST=redis-cluster-01.internal.example.com\nREDIS_PORT=6379\nREDIS_PASSWORD=R3d!s_S3cur3_K3y_2025\n\n# App\nAPP_ENV=production\nAPP_DEBUG=false\nAPP_URL=https://admin.internal.example.com\nAPP_KEY=base64:qJ3fR8mL2pX5vB7nC4kA9wE1yH6sD0tG\n\n# Mail\nMAIL_HOST=smtp.example.com\nMAIL_PORT=587\nMAIL_USERNAME=noreply@example.com\nMAIL_PASSWORD=Str0ng!M@ilP4ss\n\n# AWS\nAWS_ACCESS_KEY_ID=AKIA123456789EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\nAWS_DEFAULT_REGION=us-east-1\nAWS_S3_BUCKET=production-app-data\n\n# JWT\nJWT_SECRET=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIn0.xYzABC123\nJWT_TTL=3600\n\n# API Keys\nSTRIPE_KEY=sk_live_4eC39HqLyjWDarjtT1zdp7dc\nSENDGRID_KEY=SG.xxxxyyyyzzzz.111222333444555666777888999000`;
+    : `# Database\nDB_CONNECTION=mysql\nDB_HOST=db-master-01.internal.acme-corp.io\nDB_PORT=3306\nDB_DATABASE=production_app_v2\nDB_USER=admin_service\nDB_PASS=mM9k#2\\$xL!qR7pZ\n\n# Redis\nREDIS_HOST=redis-cluster-01.internal.acme-corp.io\nREDIS_PORT=6379\nREDIS_PASSWORD=R3d!s_S3cur3_K3y_2025\n\n# App\nAPP_ENV=production\nAPP_DEBUG=false\nAPP_URL=https://admin.internal.acme-corp.io\nAPP_KEY=base64:qJ3fR8mL2pX5vB7nC4kA9wE1yH6sD0tG\n\n# Mail\nMAIL_HOST=smtp.acme-corp.io\nMAIL_PORT=587\nMAIL_USERNAME=noreply@acme-corp.io\nMAIL_PASSWORD=Str0ng!M@ilP4ss\n\n# AWS\nAWS_ACCESS_KEY_ID=AKIA123456789EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\nAWS_DEFAULT_REGION=us-east-1\nAWS_S3_BUCKET=acme-prod-data\n\n# JWT\nJWT_SECRET=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIn0.xYzABC123\nJWT_TTL=3600\n\n# API Keys\nSTRIPE_KEY=sk_live_4eC39HqLyjWDarjtT1zdp7dc\nSENDGRID_KEY=SG.xxxxyyyyzzzz.111222333444555666777888999000`;
 }
 
 function genEnvProduction(v: Variant): string {
   return v === "default"
     ? "NODE_ENV=production\nAPI_URL=https://api.example.com\nSENTRY_DSN=https://sentry.io/12345"
-    : `# Production Environment\nNODE_ENV=production\nPORT=443\nAPI_URL=https://api.internal.example.com/v2\nSENTRY_DSN=https://abc123def456@sentry.example.com/42\nNEW_RELIC_LICENSE_KEY=NRAA-1234567890abcdef\nNEW_RELIC_APP_NAME=ProductionApp\n\n# Feature Flags\nFEATURE_NEW_PAYFLOW=true\nFEATURE_AI_RECOMMENDATIONS=false\nFEATURE_DARK_MODE=true\nMAINTENANCE_MODE=false\n\n# Rate Limiting\nRATE_LIMIT_WINDOW_MS=60000\nRATE_LIMIT_MAX_REQUESTS=100\nRATE_LIMIT_BLOCK_DURATION_MS=300000`;
+    : `# Production Environment\nNODE_ENV=production\nPORT=443\nAPI_URL=https://api.internal.acme-corp.io/v2\nSENTRY_DSN=https://abc123def456@sentry.acme-corp.io/42\nNEW_RELIC_LICENSE_KEY=NRAA-1234567890abcdef\nNEW_RELIC_APP_NAME=ProductionApp\n\n# Feature Flags\nFEATURE_NEW_PAYFLOW=true\nFEATURE_AI_RECOMMENDATIONS=false\nFEATURE_DARK_MODE=true\nMAINTENANCE_MODE=false\n\n# Rate Limiting\nRATE_LIMIT_WINDOW_MS=60000\nRATE_LIMIT_MAX_REQUESTS=100\nRATE_LIMIT_BLOCK_DURATION_MS=300000`;
 }
 
 function genAwsCredentials(v: Variant): string {
@@ -59,7 +71,7 @@ function genSshAuthorizedKeys(v: Variant): string {
 
 function genSshKey(v: Variant, type: string): string {
   const key = `-----BEGIN ${type} PRIVATE KEY-----\nMIIEpAIBAAKCAQEA1LxX4H7vJ9kR3c8f6t2s5b9g0qWpZmNvYxRzF6hC3L0\nu8mNvYxRzF6hC3L01LxX4H7vJ9kR3c8f6t2s5b9g0qWpZmNvYxRzF6hC3L0\nu8mNvYxRzF6hC3L01LxX4H7vJ9kR3c8f6t2s5b9g0qWpZmNvYxRzF6hC3L0\nu8mNvYxRzF6hC3L01LxX4H7vJ9kR3c8f6t2s5b9g0qWpZmNvYxRzF6hC3L0\nabc123def456ghi789jkl012mno345pqr678stu901vwx234yza\n-----END ${type} PRIVATE KEY-----`;
-  return v === "default" ? key : key + `\n\n# Host: gitlab.internal.example.com\n# User: deploy-bot\n# Added: 2025-01-15\n# Expires: 2026-01-15`;
+  return v === "default" ? key : key + `\n\n# Host: gitlab.acme-corp.io\n# User: deploy-bot\n# Added: 2025-01-15\n# Expires: 2026-01-15`;
 }
 
 function genEtcShadow(v: Variant): string {
@@ -70,13 +82,13 @@ function genEtcShadow(v: Variant): string {
 
 function genSslKey(v: Variant): string {
   const key = `-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDCy4KJ\n2X8pR3mN5vB7cQ9wE1yH3kT4nA6dF8gJ0sD2fG1hJ3kL5zX9cV7bN5m\n8pR3mN5vB7cQ9wE1yH3kT4nA6dF8gJ0sD2fG1hJ3kL5zX9cV7bN5m8pR3\n-----END PRIVATE KEY-----`;
-  return v === "default" ? key : key + `\n\n# Certificate: *.example.com\n# Issuer: Let's Encrypt Authority X3\n# Expires: 2026-03-15 23:59:59 UTC\n# Key Strength: RSA 2048-bit`;
+  return v === "default" ? key : key + `\n\n# Certificate: *.acme-corp.io\n# Issuer: Let's Encrypt Authority X3\n# Expires: 2026-03-15 23:59:59 UTC\n# Key Strength: RSA 2048-bit`;
 }
 
 function genGitConfig(v: Variant): string {
   return v === "default"
     ? "[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = false\n[remote \"origin\"]\n\turl = https://github.com/org/project.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*"
-    : `[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = false\n\tignorecase = true\n[remote "origin"]\n\turl = git@github.com:acmecorp/production-app.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n[branch "main"]\n\tremote = origin\n\tmerge = refs/heads/main\n[branch "develop"]\n\tremote = origin\n\tmerge = refs/heads/develop\n[user]\n\tname = DevOps Bot\n\temail = devops@example.com\n[github]\n\tuser = acmecorp\n\ttoken = ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`;
+    : `[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = false\n\tignorecase = true\n[remote "origin"]\n\turl = git@github.com:acmecorp/production-app.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n[branch "main"]\n\tremote = origin\n\tmerge = refs/heads/main\n[branch "develop"]\n\tremote = origin\n\tmerge = refs/heads/develop\n[user]\n\tname = DevOps Bot\n\temail = devops@acme-corp.io\n[github]\n\tuser = acmecorp\n\ttoken = ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`;
 }
 
 // ─── CONFIGS ────────────────────────────────────────────────────────────────
@@ -85,22 +97,22 @@ function genDatabaseConfig(v: Variant): string {
   return v === "default"
     ? JSON.stringify({ driver: "mysql", host: "localhost", database: "app_db", username: "root", password: "password" }, null, 2)
     : JSON.stringify({
-      default: { driver: "mysql", host: "db-master-01.internal.example.com", port: 3306, database: "production_app", username: "app_admin", password: "aB3#dE5$fG7*hJ9", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", prefix: "app_", engine: "InnoDB" },
-      redis: { driver: "redis", host: "redis-cluster-01.internal.example.com", port: 6379, password: "R3d!sK3y2025!", database: 0 },
-      read_replica: { host: "db-replica-01.internal.example.com", port: 3306, database: "production_app", username: "app_readonly", password: "r34d0nly#P@ss" },
+      default: { driver: "mysql", host: "db-master-01.internal.acme-corp.io", port: 3306, database: "production_app", username: "app_admin", password: "aB3#dE5$fG7*hJ9", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", prefix: "app_", engine: "InnoDB" },
+      redis: { driver: "redis", host: "redis-cluster-01.internal.acme-corp.io", port: 6379, password: "R3d!sK3y2025!", database: 0 },
+      read_replica: { host: "db-replica-01.internal.acme-corp.io", port: 3306, database: "production_app", username: "app_readonly", password: "r34d0nly#P@ss" },
     }, null, 2);
 }
 
 function genPhpConfig(v: Variant): string {
   return v === "default"
     ? `<?php\ndefine('DB_NAME', 'wordpress');\ndefine('DB_USER', 'wp_user');\ndefine('DB_PASSWORD', 'wp_password');\ndefine('DB_HOST', 'localhost');\ndefine('AUTH_KEY', 'put your unique phrase here');\n?>`
-    : `<?php\n/** Production WordPress Configuration */\ndefine('DB_NAME', 'production_wp_db');\ndefine('DB_USER', 'wp_admin_service');\ndefine('DB_PASSWORD', 'wP!s3cur3#K3y2025');\ndefine('DB_HOST', 'db-master-01.internal.example.com:3306');\ndefine('DB_CHARSET', 'utf8mb4');\ndefine('DB_COLLATE', 'utf8mb4_unicode_ci');\n\ndefine('AUTH_KEY', '6f8a7b9c0d1e2f3a4b5c6d7e8f9a0b1c');\ndefine('SECURE_AUTH_KEY', '9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d');\ndefine('LOGGED_IN_KEY', '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d');\ndefine('NONCE_KEY', '5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b');\n\ndefine('WP_HOME', 'https://admin.internal.example.com');\ndefine('WP_SITEURL', 'https://admin.internal.example.com');\ndefine('WP_DEBUG', false);\ndefine('DISALLOW_FILE_EDIT', true);\n\n$table_prefix = 'wp_prod_';\nif (!defined('ABSPATH')) define('ABSPATH', '/var/www/production/wp/');\nrequire_once ABSPATH . 'wp-settings.php';`;
+    : `<?php\n/** Production WordPress Configuration */\ndefine('DB_NAME', 'production_wp_db');\ndefine('DB_USER', 'wp_admin_service');\ndefine('DB_PASSWORD', 'wP!s3cur3#K3y2025');\ndefine('DB_HOST', 'db-master-01.internal.acme-corp.io:3306');\ndefine('DB_CHARSET', 'utf8mb4');\ndefine('DB_COLLATE', 'utf8mb4_unicode_ci');\n\ndefine('AUTH_KEY', '6f8a7b9c0d1e2f3a4b5c6d7e8f9a0b1c');\ndefine('SECURE_AUTH_KEY', '9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d');\ndefine('LOGGED_IN_KEY', '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d');\ndefine('NONCE_KEY', '5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b');\n\ndefine('WP_HOME', 'https://admin.internal.acme-corp.io');\ndefine('WP_SITEURL', 'https://admin.internal.acme-corp.io');\ndefine('WP_DEBUG', false);\ndefine('DISALLOW_FILE_EDIT', true);\n\n$table_prefix = 'wp_prod_';\nif (!defined('ABSPATH')) define('ABSPATH', '/var/www/production/wp/');\nrequire_once ABSPATH . 'wp-settings.php';`;
 }
 
 function genDockerCompose(v: Variant): string {
   return v === "default"
     ? "version: '3.8'\nservices:\n  app:\n    build: .\n    ports:\n      - \"8080:80\"\n  db:\n    image: mysql:8.0\n    environment:\n      MYSQL_ROOT_PASSWORD: root"
-    : `version: '3.8'\nservices:\n  app:\n    build:\n      context: .\n      dockerfile: Dockerfile.prod\n    image: registry.example.com/app:latest\n    container_name: production_app\n    restart: unless-stopped\n    ports:\n      - "443:443"\n    env_file:\n      - .env.production\n    volumes:\n      - ./storage/logs:/var/www/storage/logs\n    depends_on:\n      db:\n        condition: service_healthy\n      redis:\n        condition: service_started\n    networks:\n      - backend\n\n  db:\n    image: mysql:8.0.35\n    container_name: production_db\n    restart: unless-stopped\n    environment:\n      MYSQL_DATABASE: production_app\n      MYSQL_USER: app_service\n      MYSQL_PASSWORD: aB3#dE5\\$fG7*hJ9\n    volumes:\n      - db_data:/var/lib/mysql\n    networks:\n      - backend\n\n  redis:\n    image: redis:7.2-alpine\n    container_name: production_cache\n    restart: unless-stopped\n    command: redis-server --requirepass R3d!sK3y2025 --appendonly yes\n    volumes:\n      - redis_data:/data\n    networks:\n      - backend\n\nvolumes:\n  db_data:\n  redis_data:\n\nnetworks:\n  backend:\n    driver: bridge`;
+    : `version: '3.8'\nservices:\n  app:\n    build:\n      context: .\n      dockerfile: Dockerfile.prod\n    image: registry.acme-corp.io/app:latest\n    container_name: production_app\n    restart: unless-stopped\n    ports:\n      - "443:443"\n    env_file:\n      - .env.production\n    volumes:\n      - ./storage/logs:/var/www/storage/logs\n    depends_on:\n      db:\n        condition: service_healthy\n      redis:\n        condition: service_started\n    networks:\n      - backend\n\n  db:\n    image: mysql:8.0.35\n    container_name: production_db\n    restart: unless-stopped\n    environment:\n      MYSQL_DATABASE: production_app\n      MYSQL_USER: app_service\n      MYSQL_PASSWORD: aB3#dE5\\$fG7*hJ9\n    volumes:\n      - db_data:/var/lib/mysql\n    networks:\n      - backend\n\n  redis:\n    image: redis:7.2-alpine\n    container_name: production_cache\n    restart: unless-stopped\n    command: redis-server --requirepass R3d!sK3y2025 --appendonly yes\n    volumes:\n      - redis_data:/data\n    networks:\n      - backend\n\nvolumes:\n  db_data:\n  redis_data:\n\nnetworks:\n  backend:\n    driver: bridge`;
 }
 
 function genHtaccess(v: Variant): string {
@@ -194,7 +206,7 @@ function genPhpInfo(v: Variant): string {
   return v === "default"
     ? JSON.stringify({ php_version: "8.1.12", server_software: "Apache/2.4.54 (Ubuntu)", loaded_extensions: ["mysqli", "curl", "mbstring", "gd", "xml", "json", "openssl"], memory_limit: "256M", max_execution_time: 30 }, null, 2)
     : JSON.stringify({
-      PHP_VERSION: "8.1.12", SERVER_SOFTWARE: "Apache/2.4.54 (Ubuntu 22.04)", SERVER_NAME: "web-01.production.example.com",
+      PHP_VERSION: "8.1.12", SERVER_SOFTWARE: "Apache/2.4.54 (Ubuntu 22.04)", SERVER_NAME: "web-01.production.acme-corp.io",
       DOCUMENT_ROOT: "/var/www/production/current/public",
       LOADED_EXTENSIONS: ["mysqli", "curl", "mbstring", "gd", "xml", "json", "openssl", "pdo_mysql", "redis", "imagick", "bcmath", "zip", "intl", "sodium"],
       MEMORY_LIMIT: "512M", MAX_EXECUTION_TIME: 60, MAX_INPUT_TIME: 120, MAX_INPUT_VARS: 2000, POST_MAX_SIZE: "100M", UPLOAD_MAX_FILESIZE: "50M",
@@ -207,7 +219,7 @@ function genServerInfo(v: Variant): string {
   return v === "default"
     ? JSON.stringify({ server_software: "Apache/2.4.41 (Ubuntu)", server_admin: "admin@example.com", document_root: "/var/www/html", uptime: "45 days" }, null, 2)
     : JSON.stringify({
-      SERVER_SOFTWARE: "nginx/1.24.0", SERVER_NAME: "web-01.prod.example.com", SERVER_ADMIN: "sysadmin@example.com",
+      SERVER_SOFTWARE: "nginx/1.24.0", SERVER_NAME: "web-01.prod.acme-corp.io", SERVER_ADMIN: "sysadmin@acme-corp.io",
       SERVER_ADDR: "10.0.12.45", SERVER_PORT: 443, DOCUMENT_ROOT: "/var/www/production/current/public",
       UPTIME: "127 days, 3 hours, 42 minutes", LOAD_AVERAGE: [0.45, 0.32, 0.28],
       MEMORY_USAGE: { total: "32GB", used: "24.5GB", free: "7.5GB" },
@@ -314,9 +326,9 @@ function genWpAdmin(v: Variant): string {
 }
 
 function genGenericPage(v: Variant, title: string, heading: string): string {
-  return v === "default"
+    return v === "default"
     ? JSON.stringify({ status: `${heading} active`, description: `This endpoint serves ${heading.toLowerCase()} content.` }, null, 2)
-    : html(title, `<header><h1>${heading}</h1></header><main><p>Welcome to ACME Corporation. We are a leading provider of innovative solutions for businesses worldwide.</p><p>For more information, contact us at info@example.com or call +1 (555) 123-4567.</p></main><footer>&copy; 2025 ACME Corporation</footer>`);
+    : html(title, `<header><h1>${heading}</h1></header><main><p>Welcome to ACME Corporation. We are a leading provider of innovative solutions for businesses worldwide.</p><p>For more information, contact us at info@acme-corp.io or call +1 (555) 123-4567.</p></main><footer>&copy; 2025 ACME Corporation</footer>`);
 }
 
 function genLoginPage(v: Variant, system: string): string {
@@ -595,15 +607,15 @@ function classify(endpoint: string): Gen | null {
     : "fl=123f456\ntls=TLSv1.3\nsni=plaintext\nwarp=off\ncolo=FRA\nhttp=http/2\nloc=FR\nvisit_scheme=https\nip=198.51.100.42\n";
 
   if (e.endsWith("sitemap.xml")) return (v) => v === "default"
-    ? `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/</loc></url></urlset>`
-    : `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n<url><loc>https://example.com/</loc><priority>1.0</priority></url>\n<url><loc>https://example.com/about</loc><priority>0.8</priority></url>\n<url><loc>https://example.com/products</loc><priority>0.8</priority></url>\n<url><loc>https://example.com/contact</loc><priority>0.5</priority></url>\n</urlset>`;
+    ? `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://acme-corp.io/</loc></url></urlset>`
+    : `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n<url><loc>https://acme-corp.io/</loc><priority>1.0</priority></url>\n<url><loc>https://acme-corp.io/about</loc><priority>0.8</priority></url>\n<url><loc>https://acme-corp.io/products</loc><priority>0.8</priority></url>\n<url><loc>https://acme-corp.io/contact</loc><priority>0.5</priority></url>\n</urlset>`;
 
   if (e.endsWith("ads.txt")) return (v) => v === "default"
     ? "google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n"
-    : "google.com, pub-9876543210987654, DIRECT, f08c47fec0942fa0\nexample.com, 1234567, RESELLER, abcdef123456\n";
+    : "google.com, pub-9876543210987654, DIRECT, f08c47fec0942fa0\nacme-corp.io, 1234567, RESELLER, abcdef123456\n";
   if (e.endsWith("sellers.json")) return (v) => v === "default"
-    ? j(v, { sellers: [{ seller_id: "12345", name: "Example Corp", domain: "example.com" }] })
-    : j(v, { sellers: [{ seller_type: "PUBLISHER", seller_id: "987654", name: "ACME Corporation", domain: "acme.example.com" }, { seller_type: "INTERMEDIARY", seller_id: "123456", name: "AdNetwork Pro", domain: "adnetwork.example.com" }] });
+    ? j(v, { sellers: [{ seller_id: "12345", name: "ACME Corp", domain: "acme-corp.io" }] })
+    : j(v, { sellers: [{ seller_type: "PUBLISHER", seller_id: "987654", name: "ACME Corporation", domain: "acme-corp.io" }, { seller_type: "INTERMEDIARY", seller_id: "123456", name: "AdNetwork Pro", domain: "adnetwork.acme-corp.io" }] });
 
   if (e.includes(".well-known/") || e.includes("well-known/")) return (v) => j(v, { service: "discord" });
 
@@ -659,7 +671,7 @@ function classify(endpoint: string): Gen | null {
   if (e.endsWith(".js") || e.endsWith(".script")) {
     return (v) => v === "default"
       ? "console.log('loaded');"
-      : `(function(){'use strict';var app=window.app||{};app.config={env:'production',debug:false,apiUrl:'https://api.example.com/v2',version:'2.4.1'};app.ready=function(fn){if(document.readyState!=='loading')fn();else document.addEventListener('DOMContentLoaded',fn);};app.ready(function(){console.log('App initialized');});window.app=app;})();`;
+      : `(function(){'use strict';var app=window.app||{};app.config={env:'production',debug:false,apiUrl:'https://api.acme-corp.io/v2',version:'2.4.1'};app.ready=function(fn){if(document.readyState!=='loading')fn();else document.addEventListener('DOMContentLoaded',fn);};app.ready(function(){console.log('App initialized');});window.app=app;})();`;
   }
 
   if (e.endsWith(".zip") || e.endsWith(".tar.gz") || e.endsWith(".tgz")) {
