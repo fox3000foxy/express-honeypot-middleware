@@ -62,6 +62,19 @@ app.use(instance.middleware);
 app.use(instance.phpSpoofer);
 ```
 
+### Individual mocks with `app.all()`
+
+```js
+const instance = createHoneypot({ /* options */ });
+
+// Register only specific endpoints
+app.all('/admin', instance.mocks['/admin']);
+app.all('/.env', instance.mocks['/.env']);
+app.all('/wp-admin', instance.mocks['/wp-admin']);
+```
+
+`instance.mocks` is a `Record<string, Middleware>` keyed by endpoint path — pick the ones you want.
+
 ### Shorthand (auto-registers)
 
 ```js
