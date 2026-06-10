@@ -1,16 +1,17 @@
 # Express Honeypot Middleware
 
-Express middleware that acts as a honeypot: it logs suspicious traffic and serves decoy responses for common probing routes.
+Express middleware that acts as a honeypot: it logs suspicious traffic and serves ultra-realistic decoy responses for common probing routes (328 endpoints × 2 variants).
 
 ## Features
 
-- Logs traffic to `traffic.txt`
-- Logs unknown bot-like requests to `bots.txt`
-- Serves mock responses from filesystem-based mockups
-- Supports route variants: `default` and `complete`
-- Exposes helper endpoints for analysis
-- Optional 404 fallback HTML response
-- Optional PHP route spoofing (`*.php`)
+- **On-the-fly generation** — no mockup files on disk, each request gets a fresh timestamp/request_id
+- **328 endpoints** with realistic tailored content (credentials, configs, API responses, login pages, phishing landings, etc.)
+- **2 variants**: `default` (succinct but credible) and `complete` (rich, detailed)
+- **Generator script** — `bun run scripts/generate-mockups.ts` to write files for debugging
+- **Traffic logging** — JSON-lines format, on-demand bot extraction via `/newBotsRoute`
+- **PHP spoofing** — proxies `*.php` requests to localhost for real responses
+- **Composable API** — `createHoneypot()` returns `{ mocks, phpSpoofer, notFoundHandler, register, ... }`
+- **Backward-compat** — `createHoneypot(app, options)` auto-registers
 
 ## Installation
 
@@ -22,11 +23,11 @@ npm install express-middleware-honeypot
 
 ```js
 const express = require("express");
-const honeypot = require("express-middleware-honeypot");
+const { createHoneypot } = require("express-middleware-honeypot");
 
 const app = express();
 
-honeypot(app, {
+const instance = createHoneypot({
     knownPaths: ["/", "/login", "/support"],
     knownPatterns: [/^\/blogs\/[^/]+$/],
     knownApiPaths: ["/api/cart", "/api/cart/list"],
@@ -36,63 +37,92 @@ honeypot(app, {
     isCompleteResponses: false,
 });
 
+instance.register(app);
+
 app.listen(3000, () => {
     console.log("Server running on port 3000");
 });
 ```
 
-## Mockups Structure
+Or with the shorthand signature:
 
-Mock responses are loaded from disk instead of hardcoded JSON.
-
-```text
-mockups/
-    default/
-        admin/
-            index.mock
-        wp-admin/
-            setup-config.php/
-                index.mock
-    complete/
-        ...
+```js
+createHoneypot(app, { knownPaths: [], ... });
 ```
-
-Route to file mapping:
-
-- `/admin` -> `mockups/<variant>/admin/index.mock`
-- `/wp-admin/setup-config.php` -> `mockups/<variant>/wp-admin/setup-config.php/index.mock`
-- `/` -> `mockups/<variant>/index.mock`
-
-Notes:
-
-- If file content is valid JSON, the middleware returns `res.json(...)`.
-- Otherwise, it returns raw text/HTML with `res.send(...)`.
 
 ## Runtime Options
 
-- `knownPaths: string[]`
-- `knownPatterns: RegExp[]`
-- `knownApiPaths: string[]`
-- `knownApiPatterns: RegExp[]`
-- `logTraffic?: boolean`
-- `is404Handler?: boolean`
-- `isCompleteResponses?: boolean`
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `knownPaths` | `string[]` | `[]` | Paths handled by the real app (excluded from mockups) |
+| `knownPatterns` | `RegExp[]` | `[]` | Regex patterns for real app paths |
+| `knownApiPaths` | `string[]` | `[]` | API paths handled by the real app |
+| `knownApiPatterns` | `RegExp[]` | `[]` | Regex patterns for real API paths |
+| `logTraffic` | `boolean` | `false` | Log all traffic to `traffic.txt` |
+| `is404Handler` | `boolean` | `false` | Register a fallback 404 handler |
+| `isCompleteResponses` | `boolean` | `false` | Use the "complete" (rich detail) variant |
+| `additionalEndpoints` | `string[]` | `["/not_covered_endpoint_test"]` | Extra endpoints to serve beyond the built-in 328 |
+| `enrichResponses` | `boolean` | `true` | Wrap JSON responses with timestamp/version fields |
+
+## Mockups
+
+Mock content is **generated on-the-fly** by `src/services/mockupGenerator.ts` — no filesystem I/O at runtime. Each response receives a fresh `timestamp` and `request_id`, making every reply look like it came from a live server.
+
+The generator covers **328 endpoints** across two variants:
+
+- **Default** — succinct but believable (`{ code: 0, message: "ok", data: {...} }`)
+- **Complete** — rich responses with timestamps, request IDs, meta, version headers, etc.
+
+To write mockups to disk for debugging:
+
+```bash
+bun run scripts/generate-mockups.ts --dry-run   # preview only
+bun run scripts/generate-mockups.ts --list-uncategorized  # show catchall endpoints
+```
+
+### Content types served
+
+| Type | Example endpoints |
+|---|---|
+| Credential leaks | `.env`, `secrets.json`, `aws/credentials`, `etc/shadow` |
+| SSH keys | `.ssh/id_rsa`, `.ssh/id_ed25519` |
+| Database configs | `config/database`, `wp-config.php`, `docker-compose.yml` |
+| Admin panels | `/admin`, `/wp-admin`, `/manage/account/login` |
+| API responses | `/api/version`, `/api/config`, `.do`, `.ashx` |
+| Banking phishing | `/lander/sber*`, `/index_sber.php`, Russian bank landings |
+| C2 heartbeats | Random 6+ char paths (`/262LBNFp`, `/Kd67Fq1x`) |
+| Stock/crypto | `/stock/mzhishu`, `/kline/1m/1`, `/m/allticker/1` |
+| Gambling/gaming | `/proxy/games`, `/Ctrls/GetSysCoin`, `/room/getRoomBangFans` |
+| Config files | `config.json`, `config.yml`, `sitemap.xml`, `ads.txt` |
+| Landing pages | `/about`, `/contact`, `/products`, `/blog` |
 
 ## Analysis Endpoints
 
-- `GET /newBotsRoute`: returns unhandled unknown routes found in logs
-- `GET /notCoveredAdditionalEndpoints`: returns additional endpoints not present in current mockups
+| Route | Description |
+|---|---|
+| `GET /newBotsRoute` | Returns unhandled unknown routes found in traffic logs |
+| `GET /notCoveredAdditionalEndpoints` | Returns additional endpoints not in the built-in 328 |
+
+## HoneypotInstance API
+
+```ts
+interface HoneypotInstance {
+  mocks: Record<string, Middleware>;       // Individual mock handlers
+  phpSpoofer: Middleware;                  // PHP spoofing middleware
+  notFoundHandler: Middleware;             // 404 fallback handler
+  register(app: RouteApp): void;           // Register all handlers on an Express app
+  getUnhandledRoutes(): Promise<string[]>; // Get unhandled bot routes
+  getNotCoveredEndpoints(): string[];      // Get additional uncovered endpoints
+}
+```
 
 ## Development
 
-This project uses Bun for build and tests.
-
 ```bash
-bun run build
-bun test
+bun install
+bun test          # 36+ tests
+bun run build     # TypeScript → dist/
 ```
-
-TypeScript sources are in `src/`, build output is in `dist/`.
 
 ## Security Note
 
