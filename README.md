@@ -90,6 +90,23 @@ app.use(instance.middleware);
 - `.do/.action` → `X-Powered-By: Servlet/3.0`
 - other paths → no `X-Powered-By` header
 
+### PHP Spoofer
+
+`instance.phpSpoofer` intercepts `*.php` requests and proxies them to your local dev server, returning real PHP-processed output instead of a static mock:
+
+```js
+app.use(instance.phpSpoofer);
+```
+
+How it works:
+1. Catches requests with `.php` in the path (e.g. `/wp-admin/setup-config.php`)
+2. Strips the `.php` suffix and proxies to `http://localhost:<port>/<base>`
+3. If your local PHP server (Valet, Laravel, etc.) responds, the HTML is returned
+4. If the host is not localhost, it returns a hard 404 (prevents SSRF)
+5. No local PHP server? Falls through to your 404 handler
+
+This lets you run a real WordPress/PHP app on localhost and have the honeypot serve real rendered pages to bots. For production or when no local PHP server is available, skip the phpSpoofer and the static `.php` mockups are used instead.
+
 ### Shorthand (auto-registers)
 
 ```js
