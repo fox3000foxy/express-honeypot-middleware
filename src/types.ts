@@ -24,6 +24,7 @@ export type Middleware = (...args: any[]) => void | Promise<void>;
 export interface HoneypotInstance {
   mocks: Record<string, Middleware>;
   middleware: Middleware;
+  headersMiddleware: Middleware;
   phpSpoofer: Middleware;
   notFoundHandler: Middleware;
   register: (app: RouteApp) => void;

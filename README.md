@@ -140,6 +140,7 @@ bun run scripts/generate-mockups.ts --list-uncategorized  # show catchall endpoi
 interface HoneypotInstance {
   mocks: Record<string, Middleware>;       // Individual mock handlers
   middleware: Middleware;                  // Single catch-all (use with app.use())
+  headersMiddleware: Middleware;           // Sets realistic response headers
   phpSpoofer: Middleware;                  // PHP spoofing middleware
   notFoundHandler: Middleware;             // 404 fallback handler
   register(app: RouteApp): void;           // Register all handlers on an Express app

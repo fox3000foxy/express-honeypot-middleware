@@ -148,6 +148,17 @@ export function createHoneypot(
     );
   };
 
+  const headersMiddleware: Middleware = (_req: any, res: any, next: any) => {
+    res.setHeader("Server", "nginx/1.24.0");
+    res.setHeader("X-Powered-By", "Express");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Robots-Tag", "noindex, nofollow");
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    next();
+  };
+
   const middleware: Middleware = (req: any, res: any, next: any) => {
     const path = req.path || "";
     if (PathClassifier.isKnownPath(path, knownPathOptions).isKnown) return next?.();
@@ -171,6 +182,7 @@ export function createHoneypot(
   const instance: HoneypotInstance = {
     mocks,
     middleware,
+    headersMiddleware,
     phpSpoofer,
     notFoundHandler,
 
@@ -178,6 +190,8 @@ export function createHoneypot(
       if (logTraffic) {
         app.use(trafficService.createLoggingMiddleware());
       }
+
+      app.use(headersMiddleware);
 
       for (const [endpoint, handler] of Object.entries(mocks)) {
         app.all(endpoint, handler);
